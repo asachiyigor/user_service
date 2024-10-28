@@ -1,10 +1,15 @@
 package school.faang.user_service.repository.recommendation;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import school.faang.user_service.entity.RequestStatus;
+import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
+import school.faang.user_service.entity.recommendation.SkillRequest;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +22,11 @@ public interface RecommendationRequestRepository extends JpaRepository<Recommend
             LIMIT 1
             """)
     Optional<RecommendationRequest> findLatestPendingRequest(long requesterId, long receiverId);
+
+    @Query(nativeQuery = true, value = """
+            INSERT INTO recommendation_request (message, status, skillRequests, request, receiver)
+            VALUES (:message, :status, :skillRequests, :request, :receiver)
+            """)
+    @Modifying
+    RecommendationRequest create(String message, RequestStatus status, List<SkillRequest> skillRequests, User request, User receiver);
 }
