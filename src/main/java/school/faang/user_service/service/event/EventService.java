@@ -1,6 +1,7 @@
 package school.faang.user_service.service.event;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import school.faang.user_service.dto.event.EventDto;
 import school.faang.user_service.dto.event.EventFilterDto;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class EventService {
 
@@ -24,14 +26,7 @@ public class EventService {
     private final EventMapper eventMapper;
     private final UserRepository userRepository;
 
-
-    @Autowired
-    public EventService(EventRepository eventRepository, EventMapper eventMapper, UserRepository userRepository) {
-        this.eventRepository = eventRepository;
-        this.eventMapper = eventMapper;
-        this.userRepository = userRepository;
-    }
-
+    @Transactional
     public EventDto create(EventDto eventDto) {
         validateUserSkills(eventDto);
         Event event = eventMapper.toEntity(eventDto);
@@ -59,6 +54,7 @@ public class EventService {
         eventRepository.deleteById(eventId);
     }
 
+    @Transactional
     public EventDto updateEvent(EventDto eventDto) {
         validateUserSkills(eventDto);
         Event existingEvent = eventRepository.findById(eventDto.getId())
