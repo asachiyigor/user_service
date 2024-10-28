@@ -77,9 +77,9 @@ public class EventService {
     }
 
     private void validateUserSkills(EventDto eventDto) {
-        User owner = userRepository.findById(eventDto.getOwnerId())
+        User owner = userRepository.findById(eventDto.getUserId())
                 .orElseThrow(() -> new DataValidationException(
-                        String.format("User with id %d not found", eventDto.getOwnerId())
+                        String.format("User with id %d not found", eventDto.getUserId())
                 ));
 
         Set<String> userSkills = extractUserSkills(owner);

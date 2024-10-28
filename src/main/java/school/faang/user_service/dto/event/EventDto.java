@@ -26,8 +26,8 @@ public class EventDto {
     @Future(message = "End date must be in the future")
     private LocalDateTime endDate;
 
-    @NotNull(message = "Owner ID cannot be null")
-    private Long ownerId;
+    @NotNull(message = "User ID cannot be null")
+    private Long userId;
 
     private String description;
 
