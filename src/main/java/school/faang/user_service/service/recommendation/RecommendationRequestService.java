@@ -7,9 +7,11 @@ import org.springframework.stereotype.Component;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
 import school.faang.user_service.dto.recommendation.RejectionDto;
 import school.faang.user_service.dto.recommendation.RequestFilterDto;
+import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
 import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
+import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapper;
 import school.faang.user_service.repository.SkillRepository;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
@@ -25,12 +27,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RecommendationRequestService {
     private static final int REQUESTS_PERIOD_DAYS = 160;
+    private static final RequestStatus PENDING = RequestStatus.PENDING;
 
     private final RecommendationRequestRepository requestRepository;
     private final UserRepository userRepository;
     private final SkillRepository skillRepository;
     private final RecommendationRequestMapper requestMapper;
     private final SkillRequestRepository skillRequestRepository;
+    private final RecommendationRequestRejectionMapper requestRejectionMapper;
 
     public RecommendationRequestDto create(RecommendationRequestDto requestDto) {
         validateUsersExistence(requestDto);
@@ -53,14 +57,18 @@ public class RecommendationRequestService {
     }
 
     public RecommendationRequestDto getRequest(Long id) {
-        return requestRepository.findById(id).map(requestMapper::toDto).orElseThrow(()->{
-            log.error("Request with id: {} not found in database", id);
-            return new IllegalArgumentException("Request not found in database");
-        });
+        RecommendationRequest request = getRecommendationRequestFromBD(id);
+        return requestMapper.toDto(request);
     }
 
     public RejectionDto rejectRequest(Long id, RejectionDto rejectionDto) {
-        return null;
+        RecommendationRequest request = getRecommendationRequestFromBD(id);
+        if (!request.getStatus().equals(PENDING)) {
+            log.error("Request with id: {} cannot be rejected, because its status is {}", id, request.getStatus());
+            throw new IllegalArgumentException("Request cannot be rejected");
+        }
+        RecommendationRequest requestEntity = requestRejectionMapper.toEntity(rejectionDto);
+        return requestRejectionMapper.toDto(requestRepository.save(requestEntity));
     }
 
     private void validateUsersExistence(@NotNull RecommendationRequestDto requestDto) {
@@ -106,5 +114,12 @@ public class RecommendationRequestService {
             log.error("SkillIds: {} not found in database", skillIdsNotExist);
             throw new IllegalArgumentException("Skills not found in database");
         }
+    }
+
+    private RecommendationRequest getRecommendationRequestFromBD(Long id) {
+        return requestRepository.findById(id).orElseThrow(() -> {
+            log.error("Request with id: {} not found in database", id);
+            return new IllegalArgumentException("Request not found in database");
+        });
     }
 }
