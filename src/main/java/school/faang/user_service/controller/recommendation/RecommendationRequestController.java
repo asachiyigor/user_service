@@ -17,6 +17,7 @@ import school.faang.user_service.service.RecommendationRequestService;
 @Validated
 public class RecommendationRequestController {
 
+
     private final RecommendationRequestService recommendationRequestService;
 
     @PostMapping
