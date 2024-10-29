@@ -27,11 +27,9 @@ public class EventService {
     private final UserRepository userRepository;
 
     @Transactional
-    public EventDto create(EventDto eventDto) {
-        validateUserSkills(eventDto);
-        Event event = eventMapper.toEntity(eventDto);
-        Event savedEvent = eventRepository.save(event);
-        return eventMapper.toDto(savedEvent);
+    public EventDto create(EventDto event) {
+        validateUserSkills(event);
+        return eventMapper.toDto(eventRepository.save(eventMapper.toEntity(event)));
     }
 
     public EventDto getEvent(long eventId) {
@@ -76,19 +74,19 @@ public class EventService {
                 .toList();
     }
 
-    private void validateUserSkills(EventDto eventDto) {
-        User owner = userRepository.findById(eventDto.getOwnerId())
+    private void validateUserSkills(EventDto event) {
+        User owner = userRepository.findById(event.getOwnerId())
                 .orElseThrow(() -> new DataValidationException(
-                        String.format("User with id %d not found", eventDto.getOwnerId())
+                        String.format("User with id %d not found", event.getOwnerId())
                 ));
 
         Set<String> userSkills = extractUserSkills(owner);
-        Set<String> eventSkills = extractEventSkills(eventDto);
+        Set<String> eventSkills = extractEventSkills(event);
 
         if (!userSkills.containsAll(eventSkills)) {
             throw new DataValidationException(
                     String.format("User %d doesn't have all required skills for event %d",
-                            owner.getId(), eventDto.getId())
+                            owner.getId(), event.getId())
             );
         }
     }
