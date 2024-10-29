@@ -361,7 +361,8 @@ class EventServiceTest {
     }
 
     @Test
-    void updateEvent_ValidData_Success() {
+    @DisplayName("Should update event successfully when valid data provided")
+    void updateEvent_WithValidData_ShouldSucceed() {
         // given
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
@@ -379,8 +380,8 @@ class EventServiceTest {
     }
 
     @Test
-    @DisplayName("Should update event successfully when valid data provided")
-    void updateEvent_WithValidData_ShouldSucceed() {
+    @DisplayName("Should return owned events for given user ID")
+    void getOwnedEvents_WithUserId_ShouldReturnUserEvents() {
         // given
         List<Event> events = Arrays.asList(event);
         when(eventRepository.findAllByUserId(1L)).thenReturn(events);
@@ -396,8 +397,8 @@ class EventServiceTest {
     }
 
     @Test
-    @DisplayName("Should return owned events for given user ID")
-    void getOwnedEvents_WithUserId_ShouldReturnUserEvents() {
+    @DisplayName("Should return participated events for given user ID")
+    void getParticipatedEvents_WithUserId_ShouldReturnEvents() {
         // given
         List<Event> events = Arrays.asList(event);
         when(eventRepository.findParticipatedEventsByUserId(1L)).thenReturn(events);
