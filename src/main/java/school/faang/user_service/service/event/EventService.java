@@ -55,7 +55,7 @@ public class EventService {
     @Transactional
     public EventDto updateEvent(EventDto eventDto) {
         validateUserSkills(eventDto);
-        Event existingEvent = eventRepository.findById(eventDto.getId())
+        eventRepository.findById(eventDto.getId())
                 .orElseThrow(() -> new DataValidationException("Event not found"));
         Event updatedEvent = eventMapper.toEntity(eventDto);
         Event savedEvent = eventRepository.save(updatedEvent);
@@ -63,13 +63,15 @@ public class EventService {
     }
 
     public List<EventDto> getOwnedEvents(long userId) {
-        return eventRepository.findAllByUserId(userId).stream()
+        List<Event> events = eventRepository.findAllByUserId(userId);
+        return events.stream()
                 .map(eventMapper::toDto)
                 .toList();
     }
 
     public List<EventDto> getParticipatedEvents(long userId) {
-        return eventRepository.findParticipatedEventsByUserId(userId).stream()
+        List<Event> events = eventRepository.findParticipatedEventsByUserId(userId);
+        return events.stream()
                 .map(eventMapper::toDto)
                 .toList();
     }
