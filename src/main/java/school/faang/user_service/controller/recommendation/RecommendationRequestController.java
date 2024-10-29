@@ -1,16 +1,16 @@
 package school.faang.user_service.controller.recommendation;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.web.bind.annotation.*;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
 import school.faang.user_service.dto.recommendation.RejectionDto;
 import school.faang.user_service.dto.recommendation.RequestFilterDto;
+import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.service.recommendation.RecommendationRequestService;
 
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class RecommendationRequestController {
@@ -18,10 +18,7 @@ public class RecommendationRequestController {
 
     @PostMapping("/recommendation-requests/create")
     public RecommendationRequestDto requestRecommendation(@RequestBody RecommendationRequestDto recommendationRequestDto) {
-        if (recommendationRequestDto.getMessage() == null || recommendationRequestDto.getMessage().isEmpty()) {
-            log.error("Recommendation request message cannot be empty");
-            throw new IllegalArgumentException("Recommendation request message cannot be empty");
-        }
+        validateRequestMessage(recommendationRequestDto);
         return recommendationRequestService.create(recommendationRequestDto);
     }
 
@@ -40,7 +37,9 @@ public class RecommendationRequestController {
         return recommendationRequestService.rejectRequest(id, rejectionDto);
     }
 
-
-
-
+    private void validateRequestMessage(@NotNull RecommendationRequestDto requestDto) {
+        if (requestDto.getMessage() == null || requestDto.getMessage().isEmpty()) {
+            throw  new DataValidationException("Recommendation request message cannot be empty");
+        }
+    }
 }

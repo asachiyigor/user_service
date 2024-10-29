@@ -1,7 +1,6 @@
 package school.faang.user_service.service.recommendation;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
@@ -10,6 +9,7 @@ import school.faang.user_service.dto.recommendation.RequestFilterDto;
 import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
 import school.faang.user_service.entity.recommendation.SkillRequest;
+import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapper;
 import school.faang.user_service.repository.SkillRepository;
@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RecommendationRequestService {
@@ -65,7 +64,6 @@ public class RecommendationRequestService {
                 .distinct()
                 .map(requestMapper::toDto)
                 .toList();
-
     }
 
     public RecommendationRequestDto getRequest(Long id) {
@@ -76,8 +74,7 @@ public class RecommendationRequestService {
     public RejectionDto rejectRequest(Long id, RejectionDto rejectionDto) {
         RecommendationRequest request = getRecommendationRequestFromBD(id);
         if (!request.getStatus().equals(PENDING)) {
-            log.error("Request with id: {} cannot be rejected, because its status is {}", id, request.getStatus());
-            throw new IllegalArgumentException("Request cannot be rejected");
+            throw new DataValidationException("Request id: " + id + " cannot be rejected");
         }
         RecommendationRequest requestEntity = requestRejectionMapper.toEntity(rejectionDto);
         return requestRejectionMapper.toDto(requestRepository.save(requestEntity));
@@ -85,19 +82,13 @@ public class RecommendationRequestService {
 
     private void validateUsersExistence(@NotNull RecommendationRequestDto requestDto) {
         if (!userRepository.existsById(requestDto.getRequesterId())) {
-            log.error("RequesterId: {} not found in database", requestDto.getRequesterId());
-            throw new IllegalArgumentException("Requester not found in database");
+            throw new DataValidationException("Requester id: " + requestDto.getRequesterId() + " not found in database");
         }
         if (!userRepository.existsById(requestDto.getReceiverId())) {
-            log.error("ReceiverId: {} not found in database", requestDto.getReceiverId());
-            throw new IllegalArgumentException("Receiver not found in database");
+            throw new DataValidationException("Receiver id: " + requestDto.getReceiverId() + " not found in database");
         }
         if (requestDto.getReceiverId().equals(requestDto.getRequesterId())) {
-            log.error("RequesterId: {} and receiverId {} cannot be the same user",
-                    requestDto.getRequesterId(),
-                    requestDto.getReceiverId()
-            );
-            throw new IllegalArgumentException("Requester and receiver cannot be the same user");
+            throw new DataValidationException("Requester and receiver cannot be the same user");
         }
     }
 
@@ -109,8 +100,7 @@ public class RecommendationRequestService {
         if (recommendationRequest != null) {
             long durationDays = Duration.between(recommendationRequest.getCreatedAt(), LocalDateTime.now()).toDays();
             if (durationDays <= REQUESTS_PERIOD_DAYS) {
-                log.error("Request period is too short: {} days", durationDays);
-                throw new IllegalArgumentException("Request period is too short");
+                throw new DataValidationException("Request period is too short: " + durationDays + " days");
             }
         }
     }
@@ -123,15 +113,12 @@ public class RecommendationRequestService {
             }
         });
         if (!skillIdsNotExist.isEmpty()) {
-            log.error("SkillIds: {} not found in database", skillIdsNotExist);
-            throw new IllegalArgumentException("Skills not found in database");
+            throw new DataValidationException("Skills: " + skillIdsNotExist + " not found in database");
         }
     }
 
     private RecommendationRequest getRecommendationRequestFromBD(Long id) {
-        return requestRepository.findById(id).orElseThrow(() -> {
-            log.error("Request with id: {} not found in database", id);
-            return new IllegalArgumentException("Request not found in database");
-        });
+        return requestRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Request id: " + id
+                + " not found in database: "));
     }
 }
