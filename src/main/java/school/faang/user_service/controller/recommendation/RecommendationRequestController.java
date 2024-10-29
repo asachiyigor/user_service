@@ -16,6 +16,7 @@ import school.faang.user_service.service.RecommendationRequestService;
 @Validated
 public class RecommendationRequestController {
 
+
     private final RecommendationRequestService recommendationRequestService;
 
     public RecommendationRequestDto requestRecommendation(@RequestBody @NotNull @Valid RecommendationRequestDto recommendationRequestDto) {
