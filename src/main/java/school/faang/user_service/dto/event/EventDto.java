@@ -27,7 +27,7 @@ public class EventDto {
     private LocalDateTime endDate;
 
     @NotNull(message = "User ID cannot be null")
-    private Long userId;
+    private Long ownerId;
 
     private String description;
 
