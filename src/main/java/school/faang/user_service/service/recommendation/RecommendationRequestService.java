@@ -8,9 +8,12 @@ import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
 import school.faang.user_service.dto.recommendation.RejectionDto;
 import school.faang.user_service.dto.recommendation.RequestFilterDto;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
+import school.faang.user_service.entity.recommendation.SkillRequest;
+import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
 import school.faang.user_service.repository.SkillRepository;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
+import school.faang.user_service.repository.recommendation.SkillRequestRepository;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -26,13 +29,23 @@ public class RecommendationRequestService {
     private final RecommendationRequestRepository requestRepository;
     private final UserRepository userRepository;
     private final SkillRepository skillRepository;
+    private final RecommendationRequestMapper requestMapper;
+    private final SkillRequestRepository skillRequestRepository;
 
-    public RecommendationRequestDto create(RecommendationRequestDto recommendationRequestDto) {
-        validateUsersExistence(recommendationRequestDto);
-        validateRequestPeriod(recommendationRequestDto);
-        validateSkillRequestsExistence(recommendationRequestDto);
+    public RecommendationRequestDto create(RecommendationRequestDto requestDto) {
+        validateUsersExistence(requestDto);
+        validateRequestPeriod(requestDto);
+        validateSkillRequestsExistence(requestDto);
 
-        return null;
+        RecommendationRequest requestEntity = requestMapper.toEntity(requestDto);
+        long idRequest = requestEntity.getId();
+        List<SkillRequest> skills = requestEntity.getSkills();
+        requestDto.getSkillsIds().forEach(skillId -> {
+            SkillRequest skillRequest = skillRequestRepository.create(idRequest, skillId);
+            skills.add(skillRequest);
+        });
+        RecommendationRequest recommendationRequest = requestRepository.save(requestEntity);
+        return requestMapper.toDto(recommendationRequest);
     }
 
     public List<RecommendationRequestDto> getRequests(RequestFilterDto filterDto) {
@@ -40,7 +53,10 @@ public class RecommendationRequestService {
     }
 
     public RecommendationRequestDto getRequest(Long id) {
-        return null;
+        return requestRepository.findById(id).map(requestMapper::toDto).orElseThrow(()->{
+            log.error("Request with id: {} not found in database", id);
+            return new IllegalArgumentException("Request not found in database");
+        });
     }
 
     public RejectionDto rejectRequest(Long id, RejectionDto rejectionDto) {
@@ -80,7 +96,7 @@ public class RecommendationRequestService {
     }
 
     private void validateSkillRequestsExistence(@NotNull RecommendationRequestDto requestDto) {
-        List<Long> skillIdsNotExist =  new ArrayList<>(requestDto.getSkillsIds());
+        List<Long> skillIdsNotExist = new ArrayList<>(requestDto.getSkillsIds());
         requestDto.getSkillsIds().forEach(skillId -> {
             if (!skillRepository.existsById(skillId)) {
                 skillIdsNotExist.add(skillId);
