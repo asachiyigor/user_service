@@ -10,6 +10,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface RecommendationRequestMapper {
+    @Mapping(target = "skills", ignore = true)
     @Mapping(source = "requesterId", target = "requester.id")
     @Mapping(source = "receiverId", target = "receiver.id")
     RecommendationRequest toEntity(RecommendationRequestDto recommendationRequestDto);
