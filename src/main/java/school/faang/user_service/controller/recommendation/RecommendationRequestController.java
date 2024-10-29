@@ -27,17 +27,17 @@ public class RecommendationRequestController {
 
     @PostMapping("/recommendation-requests/filter")
     public List<RecommendationRequestDto> getRecommendationRequests(@RequestBody RequestFilterDto filterDto) {
-        return null;
+        return recommendationRequestService.getRequests(filterDto);
     }
 
     @GetMapping("/recommendation-requests/{id}")
     public RecommendationRequestDto getRecommendationRequest(@PathVariable Long id) {
-        return null;
+        return recommendationRequestService.getRequest(id);
     }
 
     @PostMapping("/recommendation-requests/{id}/reject")
     public RejectionDto rejectRequest(@PathVariable Long id, @RequestBody RejectionDto rejectionDto) {
-        return null;
+        return recommendationRequestService.rejectRequest(id, rejectionDto);
     }
 
 
