@@ -10,18 +10,17 @@ import java.util.List;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface RecommendationRequestMapper {
+    @Mapping(source = "requesterId", target = "requester.id")
+    @Mapping(source = "receiverId", target = "receiver.id")
+    RecommendationRequest toEntity(RecommendationRequestDto recommendationRequestDto);
 
     @Mapping(source = "requester.id", target = "requesterId")
     @Mapping(source = "receiver.id", target = "receiverId")
-    @Mapping(source = "skills", target = "skillIds", qualifiedByName = "mapSkillsToSkillIds")
+    @Mapping(source = "skills", target = "skillIds", qualifiedByName = "mapSkillRequestsToSkillIds")
     RecommendationRequestDto toDto(RecommendationRequest recommendationRequest);
 
-    RecommendationRequest toEntity(RecommendationRequestDto recommendationRequestDto);
 
-
-    private static List<Long> mapSkillsToSkillIds(List<SkillRequest> skillRequests) {
-        return skillRequests.stream()
-                .map(skillRequest -> skillRequest.getSkill().getId())
-                .toList();
+    private static List<Long> mapSkillRequestsToSkillIds(List<SkillRequest> skillRequests) {
+        return skillRequests.stream().map(SkillRequest::getId).toList();
     }
 }
