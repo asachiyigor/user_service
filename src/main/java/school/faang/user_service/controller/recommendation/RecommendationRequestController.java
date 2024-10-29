@@ -1,20 +1,24 @@
 package school.faang.user_service.controller.recommendation;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import school.faang.user_service.dto.RecommendationRequestDto;
-import school.faang.user_service.service.recommendation.RecommendationRequestService;
+import school.faang.user_service.service.RecommendationRequestService;
 
-@Component
+@RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/recommendation-requests")
+@Validated
 public class RecommendationRequestController {
 
     private final RecommendationRequestService recommendationRequestService;
 
-    public RecommendationRequestDto requestRecommendation(RecommendationRequestDto recommendationRequestDto) {
-        if (!recommendationRequestService.isValidRequest(recommendationRequestDto)) {
-            return null;
-        }
+    public RecommendationRequestDto requestRecommendation(@RequestBody @NotNull @Valid RecommendationRequestDto recommendationRequestDto) {
         return recommendationRequestService.create(recommendationRequestDto);
     }
 }
