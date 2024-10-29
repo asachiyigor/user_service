@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -35,6 +36,7 @@ public class RecommendationRequestService {
     private final RecommendationRequestMapper requestMapper;
     private final SkillRequestRepository skillRequestRepository;
     private final RecommendationRequestRejectionMapper requestRejectionMapper;
+    private final List<Filter<RecommendationRequest>> filters;
 
     public RecommendationRequestDto create(RecommendationRequestDto requestDto) {
         validateUsersExistence(requestDto);
@@ -53,7 +55,17 @@ public class RecommendationRequestService {
     }
 
     public List<RecommendationRequestDto> getRequests(RequestFilterDto filterDto) {
-        return null;
+        Stream<RecommendationRequest> requestStream = requestRepository.findAll().stream();
+        for (Filter<RecommendationRequest> filter : filters) {
+            if (filter.isApplicable(filterDto)) {
+                requestStream = filter.apply(requestStream, filterDto);
+            }
+        }
+        return requestStream
+                .distinct()
+                .map(requestMapper::toDto)
+                .toList();
+
     }
 
     public RecommendationRequestDto getRequest(Long id) {
