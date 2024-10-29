@@ -1,7 +1,9 @@
 package school.faang.user_service.mapper;
 
+import org.jetbrains.annotations.NotNull;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import school.faang.user_service.dto.RecommendationRequestDto;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
 import school.faang.user_service.entity.recommendation.SkillRequest;
@@ -21,7 +23,8 @@ public interface RecommendationRequestMapper {
     RecommendationRequestDto toDto(RecommendationRequest recommendationRequest);
 
 
-    private static List<Long> mapSkillRequestsToSkillIds(List<SkillRequest> skillRequests) {
+    @Named("mapSkillRequestsToSkillIds")
+    default List<Long> mapSkillRequestsToSkillIds(@NotNull List<SkillRequest> skillRequests) {
         return skillRequests.stream().map(SkillRequest::getId).toList();
     }
 }
