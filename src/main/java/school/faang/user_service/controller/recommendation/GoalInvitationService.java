@@ -1,12 +1,13 @@
-package school.faang.user_service.service.goal;
+package school.faang.user_service.controller.recommendation;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import school.faang.user_service.dto.goal.GoalInvitationDto;
 import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.goal.Goal;
 import school.faang.user_service.entity.goal.GoalInvitation;
+import school.faang.user_service.exeption.DataValidationException;
 import school.faang.user_service.mapper.GoalInvitationMapper;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.goal.GoalInvitationRepository;
@@ -15,28 +16,28 @@ import school.faang.user_service.repository.goal.GoalRepository;
 import java.util.List;
 import java.util.Optional;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class GoalInvitationService {
     private final GoalInvitationMapper invitationMapper;
     private final GoalInvitationRepository goalInvitationRepository;
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
-    private final int maxGoals = 3;
+    private static final int MAX_GOALS = 3;
 
     public GoalInvitationDto createInvitation(Long inviterId, Long invitedId, Long goalId, RequestStatus status) {
         if (inviterId == null || invitedId == null || goalId == null || status == null) {
-            throw new IllegalArgumentException("Аргументы не должны быть null");
+            throw new DataValidationException("Аргументы не должны быть null");
         }
         GoalInvitation invitation = new GoalInvitation();
         Optional<Goal> goal = goalRepository.findById(goalId);
         Optional<User> invitedUser = userRepository.findById(invitedId);
         Optional<User> inviterUser = userRepository.findById(inviterId);
         if (goal.isEmpty()) {
-            throw new IllegalArgumentException("Goal equals null");
+            throw new DataValidationException("Goal equals null");
         }
         if (invitation.getInviter() == invitation.getInvited() || invitedUser.isEmpty() || inviterUser.isEmpty()) {
-            throw new IllegalArgumentException("Users must be unequal and real");
+            throw new DataValidationException("Users must be unequal and real");
         }
         invitation.setInvited(invitedUser.get());
         invitation.setInviter(inviterUser.get());
@@ -49,12 +50,12 @@ public class GoalInvitationService {
     public boolean acceptGoalInvitation(long id) {
         Optional<GoalInvitation> goalInvited = goalInvitationRepository.findById(id);
         if (goalInvited.isEmpty()) {
-            throw new IllegalArgumentException("GoalInvitation id not found");
+            throw new DataValidationException("GoalInvitation id not found");
         }
 
         GoalInvitation goalInvitation = goalInvited.get();
         User invitedUser = goalInvitation.getInvited();
-        if (invitedUser.getGoals().size() >= maxGoals) {
+        if (invitedUser.getGoals().size() >= MAX_GOALS) {
             rejectGoalInvitation(id);
             return false;
         }
@@ -77,7 +78,7 @@ public class GoalInvitationService {
             GoalInvitation goalInvitation = goalInvitationOptional.get();
             Optional<Goal> goal = goalRepository.findById(goalInvitation.getGoal().getId());
             if (goal.isEmpty()) {
-                throw new IllegalStateException("there is no such goal");
+                throw new DataValidationException("there is no such goal");
             }
             goalInvitation.setStatus(RequestStatus.REJECTED);
             goalInvitationRepository.save(goalInvitation);
@@ -88,7 +89,7 @@ public class GoalInvitationService {
                                      Long filterInviterById, Long filterInvitedById, RequestStatus status) {
         List<GoalInvitation> allGoalInvitations = goalInvitationRepository.findAll();
         if (patternInviter.isBlank()) {
-            throw new IllegalArgumentException("inviter состоит из одних пробелов");
+            throw new DataValidationException("inviter состоит из одних пробелов");
         }
         allGoalInvitations = allGoalInvitations.stream()
                 .filter(invitation -> invitation.getInviter().getUsername().equals(patternInviter)).toList();
