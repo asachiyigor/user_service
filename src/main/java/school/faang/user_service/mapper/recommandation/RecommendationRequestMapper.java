@@ -23,6 +23,6 @@ public interface RecommendationRequestMapper {
 
     @Named("skillsIds")
     default List<Long> getSkillsIds(List<SkillRequest> skills) {
-        return skills.stream().map(SkillRequest::getId).toList();
+        return skills.stream().map(skillRequest -> skillRequest.getSkill().getId()).toList();
     }
 }
