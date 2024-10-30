@@ -3,7 +3,6 @@ package school.faang.user_service.service.goal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import school.faang.user_service.dto.goal.GoalInvitationDto;
-import school.faang.user_service.dto.goal.InvitationFilterIDto;
 import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.goal.Goal;
@@ -25,12 +24,15 @@ public class GoalInvitationService {
     private final GoalRepository goalRepository;
     private final int maxGoals = 3;
 
-    public GoalInvitationDto createInvitation(GoalInvitationDto invitationDto) {
-        GoalInvitation invitation = invitationMapper.toEntity(invitationDto);
-        Optional<Goal> goal = goalRepository.findById(invitationDto.getGoalId());
-        Optional<User> invitedUser = userRepository.findById(invitationDto.getInvitedUserId());
-        Optional<User> inviterUser = userRepository.findById(invitationDto.getInviterId());
-        if (goal.isEmpty() || goalRepository.findById(invitation.getGoal().getId()).isEmpty()) {
+    public GoalInvitationDto createInvitation(Long inviterId, Long invitedId, Long goalId, RequestStatus status) {
+        if (inviterId == null || invitedId == null || goalId == null || status == null) {
+            throw new IllegalArgumentException("Аргументы не должны быть null");
+        }
+        GoalInvitation invitation = new GoalInvitation();
+        Optional<Goal> goal = goalRepository.findById(goalId);
+        Optional<User> invitedUser = userRepository.findById(invitedId);
+        Optional<User> inviterUser = userRepository.findById(inviterId);
+        if (goal.isEmpty()) {
             throw new IllegalArgumentException("Goal equals null");
         }
         if (invitation.getInviter() == invitation.getInvited() || invitedUser.isEmpty() || inviterUser.isEmpty()) {
@@ -39,6 +41,7 @@ public class GoalInvitationService {
         invitation.setInvited(invitedUser.get());
         invitation.setInviter(inviterUser.get());
         invitation.setGoal(goal.get());
+        invitation.setStatus(status);
         invitation = goalInvitationRepository.save(invitation);
         return invitationMapper.toDto(invitation);
     }
@@ -81,27 +84,26 @@ public class GoalInvitationService {
         }
     }
 
-    public List<Long> getInvitations(InvitationFilterIDto filterIDto) {
+    public List<Long> getInvitations(String patternInviter, String patternInvited,
+                                     Long filterInviterById, Long filterInvitedById, RequestStatus status) {
         List<GoalInvitation> allGoalInvitations = goalInvitationRepository.findAll();
-        String patternInviter = filterIDto.getInviterNamePattern();
+        if (patternInviter.isBlank()) {
+            throw new IllegalArgumentException("inviter состоит из одних пробелов");
+        }
         allGoalInvitations = allGoalInvitations.stream()
                 .filter(invitation -> invitation.getInviter().getUsername().equals(patternInviter)).toList();
-        String patternInvited = filterIDto.getInvitedNamePattern().trim();
-        if (!patternInvited.isEmpty()) {
+        if (!patternInvited.isEmpty() && !patternInvited.isBlank()) {
             allGoalInvitations = allGoalInvitations.stream()
                     .filter(invitation -> invitation.getInvited().getUsername().equals(patternInvited)).toList();
         }
-        Long filterInviterById = filterIDto.getInviterId();
         if (filterInviterById != null) {
             allGoalInvitations = allGoalInvitations.stream()
                     .filter(invitation -> invitation.getInviter().getId().equals(filterInviterById)).toList();
         }
-        Long filterInvitedById = filterIDto.getInvitedId();
         if (filterInvitedById != null) {
             allGoalInvitations = allGoalInvitations.stream()
                     .filter(invitation -> invitation.getInvited().getId().equals(filterInvitedById)).toList();
         }
-        RequestStatus status = filterIDto.getStatus();
         if (status != null) {
             allGoalInvitations = allGoalInvitations.stream()
                     .filter(invitation -> invitation.getStatus().equals(status)).toList();
