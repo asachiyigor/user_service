@@ -20,10 +20,10 @@ import static org.mockito.Mockito.when;
 public class EventParticipationValidatorTest {
 
     @InjectMocks
-    EventParticipationValidator eventParticipationValidator;
+    private EventParticipationValidator eventParticipationValidator;
 
     @Mock
-    EventParticipationRepository eventParticipationRepository;
+    private EventParticipationRepository eventParticipationRepository;
 
     @Test
     @DisplayName("Positive test: must return true when user is registered")

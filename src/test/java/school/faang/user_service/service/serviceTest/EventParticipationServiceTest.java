@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class EventParticipationServiceTest {
     @Mock
-    EventParticipationValidator eventParticipationValidator;
+    private EventParticipationValidator eventParticipationValidator;
 
     @Mock
     private EventParticipationRepository eventParticipationRepository;
