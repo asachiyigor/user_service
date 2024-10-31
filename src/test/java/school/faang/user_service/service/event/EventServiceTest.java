@@ -12,9 +12,7 @@ import school.faang.user_service.dto.event.EventFilterDto;
 import school.faang.user_service.dto.skill.SkillDto;
 import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.User;
-import school.faang.user_service.entity.UserSkillGuarantee;
 import school.faang.user_service.entity.event.Event;
-import school.faang.user_service.entity.goal.Goal;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.EventMapper;
 import school.faang.user_service.repository.UserRepository;
@@ -25,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +30,11 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
+    private static final Long USER_ID = 1L;
+    private static final Long EVENT_ID_1 = 1L;
+    private static final Long EVENT_ID_2 = 2L;
+    private static final String MOSCOW = "Moscow";
+    private static final String LONDON = "London";
 
     @Mock
     private EventRepository eventRepository;
@@ -46,110 +48,67 @@ class EventServiceTest {
     @InjectMocks
     private EventService eventService;
 
-    private EventDto eventDto;
+    private EventDto eventDto1;
     private EventDto eventDto2;
-    private Event event;
+    private Event event1;
     private Event event2;
     private User user;
-    private List<Skill> userSkills;
-    private List<SkillDto> eventSkills;
+    private User user2;
     private EventFilterDto filter;
 
     @BeforeEach
     void setUp() {
-        long userId = 1L;
-        long eventId = 1L;
-        long eventId2 = 2L;
-
-        Skill skillJava = new Skill();
-        skillJava.setId(1L);
-        skillJava.setTitle("Java");
-        Skill skillKotlin = new Skill();
-        skillKotlin.setId(2L);
-        skillKotlin.setTitle("Kotlin");
-
-        user = createUserWithSkills(userId, List.of(skillJava, skillKotlin));
-
-        eventSkills = List.of(
-                new SkillDto(1L, "Java"),
-                new SkillDto(2L, "Kotlin"));
-
-        eventDto = createEventDto(1L, userId, Set.of(
-                new SkillDto(1L, "Java"),
-                new SkillDto(2L, "Kotlin")
-        ));
-
-        eventDto2 = createEventDto(2L, userId, Set.of(
-                new SkillDto(3L, "Python"),
-                new SkillDto(4L, "GO")));
-
-        event = new Event();
-        event.setId(eventId);
-        event.setTitle("Test Event");
-        event.setRelatedSkills(user.getSkills());
-        event.setStartDate(LocalDateTime.now().plusDays(3));
-        event.setEndDate(LocalDateTime.now().plusDays(4));
-        event.setLocation("Moscow");
-
-        event2 = new Event();
-        event2.setId(eventId2);
-        event2.setTitle("Test Event2");
-        event2.setRelatedSkills(user.getSkills());
-        event2.setStartDate(LocalDateTime.now().plusDays(1));
-        event2.setEndDate(LocalDateTime.now().plusDays(6));
-        event2.setLocation("London");
+        user = createDefaultUser();
+        user2 = createUserWithInvalidSkills();
+        eventDto1 = createDefaultEventDto(EVENT_ID_1);
+        eventDto2 = createDefaultEventDto(EVENT_ID_2);
+        event1 = createDefaultEvent(EVENT_ID_1, MOSCOW);
+        event2 = createDefaultEvent(EVENT_ID_2, LONDON);
     }
 
     @Test
     @DisplayName("Should create event successfully when user has all required skills")
     void createEvent_WithValidSkills_ShouldSucceed() {
 
-        Event dtoEvent = new Event();
-        Event entityEvent = new Event();
-
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(eventMapper.toEntity(eventDto)).thenReturn(dtoEvent);
-        when(eventRepository.save(dtoEvent)).thenReturn(entityEvent);
-        when(eventMapper.toDto(entityEvent)).thenReturn(eventDto);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(eventMapper.toEntity(eventDto1)).thenReturn(event1);
+        when(eventRepository.save(event1)).thenReturn(event1);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // Act
-        EventDto result = eventService.create(eventDto);
+        EventDto result = eventService.create(eventDto1);
+
+        // Verify all interactions
+        verify(userRepository).findById(USER_ID);
+        verify(eventMapper).toEntity(eventDto1);
+        verify(eventRepository).save(event1);
+        verify(eventMapper).toDto(event1);
 
         // Assert
         assertNotNull(result);
-        assertEquals(event.getId(), result.getId());
-        assertEquals(user.getId(), result.getOwnerId());
-
-        // Verify all interactions
-        verify(userRepository).findById(user.getId());
-        verify(eventMapper).toEntity(eventDto);
-        verify(eventRepository).save(dtoEvent);
-        verify(eventMapper).toDto(entityEvent);
+        assertEquals(event1.getId(), result.getId());
+        assertEquals(USER_ID, result.getOwnerId());
     }
 
     @Test
     @DisplayName("Should throw exception when user doesn't have required skills")
     void createEvent_WithInvalidSkills_ShouldThrowException() {
-        // Arrange
-        long userId = 1L;
 
-        // User has only JS skill
-        User user = createUserWithSkills(userId, List.of(
-                new Skill(3L, "JS", List.of(new User(), new User()), List.of(new UserSkillGuarantee(), new UserSkillGuarantee()), List.of(new Event(), new Event()), List.of(new Goal()), LocalDateTime.now(), LocalDateTime.now())
-        ));
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user2));
 
         // Act & Assert
         DataValidationException exception = assertThrows(
                 DataValidationException.class,
-                () -> eventService.create(eventDto)
+                () -> eventService.create(eventDto1)
         );
 
-        assertTrue(exception.getMessage().contains("doesn't have all required skills"));
-        verify(userRepository).findById(userId);
+        // Verify all interactions
+        verify(userRepository).findById(USER_ID);
         verify(eventMapper, never()).toEntity(any());
         verify(eventRepository, never()).save(any());
+
+        // Assert
+        assertTrue(exception.getMessage().contains("doesn't have all required skills"));
     }
 
     @Test
@@ -163,13 +122,16 @@ class EventServiceTest {
         // Act & Assert
         DataValidationException exception = assertThrows(
                 DataValidationException.class,
-                () -> eventService.create(eventDto)
+                () -> eventService.create(eventDto1)
         );
 
-        assertTrue(exception.getMessage().contains("User with id " + userId + " not found"));
+        // Verify all interactions
         verify(userRepository).findById(userId);
         verify(eventMapper, never()).toEntity(any());
         verify(eventRepository, never()).save(any());
+
+        // Assert
+        assertTrue(exception.getMessage().contains("User with id " + userId + " not found"));
     }
 
     @Test
@@ -177,18 +139,21 @@ class EventServiceTest {
     void createEvent_WhenMapperFails_ShouldThrowException() {
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(eventMapper.toEntity(eventDto)).thenThrow(new RuntimeException("Mapping error"));
+        when(eventMapper.toEntity(eventDto1)).thenThrow(new RuntimeException("Mapping error"));
 
         // Act & Assert
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
-                () -> eventService.create(eventDto)
+                () -> eventService.create(eventDto1)
         );
 
-        assertEquals("Mapping error", exception.getMessage());
+        // Verify all interactions
         verify(userRepository).findById(user.getId());
-        verify(eventMapper).toEntity(eventDto);
+        verify(eventMapper).toEntity(eventDto1);
         verify(eventRepository, never()).save(any());
+
+        // Assert
+        assertEquals("Mapping error", exception.getMessage());
     }
 
     @Test
@@ -198,63 +163,67 @@ class EventServiceTest {
         Event mappedEvent = new Event();
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(eventMapper.toEntity(eventDto)).thenReturn(mappedEvent);
+        when(eventMapper.toEntity(eventDto1)).thenReturn(mappedEvent);
         when(eventRepository.save(mappedEvent)).thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
-                () -> eventService.create(eventDto)
+                () -> eventService.create(eventDto1)
         );
 
-        assertEquals("Database error", exception.getMessage());
+        // Verify all interactions
         verify(userRepository).findById(user.getId());
-        verify(eventMapper).toEntity(eventDto);
+        verify(eventMapper).toEntity(eventDto1);
         verify(eventRepository).save(mappedEvent);
+
+        // Assert
+        assertEquals("Database error", exception.getMessage());
     }
 
     @Test
     @DisplayName("Should return all events when no filters applied")
     void getEventsByFilter_WithNoFilters_ShouldReturnAllEvents() {
         // Arrange
-        filter = new EventFilterDto(); // пустой фильтр
-        List<Event> events = Arrays.asList(event, event2);
+        filter = new EventFilterDto();
+        List<Event> events = Arrays.asList(event1, event2);
 
         when(eventRepository.findAll()).thenReturn(events);
-        when(eventMapper.toDto(event)).thenReturn(eventDto);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
         when(eventMapper.toDto(event2)).thenReturn(eventDto2);
 
         // Act
         List<EventDto> result = eventService.getEventsByFilter(filter);
 
+        // Verify all interactions
+        verify(eventRepository).findAll();
+        verify(eventMapper, times(1)).toDto(event1);
+        verify(eventMapper, times(1)).toDto(event2);
+
         // Assert
         assertEquals(2, result.size());
-        verify(eventRepository).findAll();
-        verify(eventMapper, times(1)).toDto(event);
-        verify(eventMapper, times(1)).toDto(event2);
     }
 
     @Test
     @DisplayName("Should return filtered events when date range filter applied")
     void getEventsByFilter_WithDateRange_ShouldReturnFilteredEvents() {
         // Arrange
-        filter = new EventFilterDto();
-        filter.setStartDateFrom(LocalDateTime.now().plusDays(1));
-        filter.setStartDateTo(LocalDateTime.now().plusDays(3));
-
-        List<Event> events = Arrays.asList(event, event2);
+        filter = createDefaultFilter();
+        List<Event> events = Arrays.asList(event1, event2);
 
         when(eventRepository.findAll()).thenReturn(events);
-        when(eventMapper.toDto(event)).thenReturn(eventDto2);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // Act
         List<EventDto> result = eventService.getEventsByFilter(filter);
 
+        // Verify all interactions
+        verify(eventRepository).findAll();
+        verify(eventMapper, times(1)).toDto(event1);
+        verify(eventMapper, never()).toDto(event2);
+
         // Assert
         assertEquals(1, result.size());
-        verify(eventRepository).findAll();
-        verify(eventMapper, times(1)).toDto(event);
-        verify(eventMapper, never()).toDto(event2);
     }
 
     @Test
@@ -262,21 +231,23 @@ class EventServiceTest {
     void getEventsByFilter_WithLocation_ShouldReturnFilteredEvents() {
         // Arrange
         filter = new EventFilterDto();
-        filter.setLocation("Moscow");
+        filter.setLocation(MOSCOW);
 
-        List<Event> events = Arrays.asList(event, event2);
+        List<Event> events = Arrays.asList(event1, event2);
 
         when(eventRepository.findAll()).thenReturn(events);
-        when(eventMapper.toDto(event)).thenReturn(eventDto);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // Act
         List<EventDto> result = eventService.getEventsByFilter(filter);
 
+        // Verify all interactions
+        verify(eventRepository).findAll();
+        verify(eventMapper, times(1)).toDto(event1);
+        verify(eventMapper, never()).toDto(event2);
+
         // Assert
         assertEquals(1, result.size());
-        verify(eventRepository).findAll();
-        verify(eventMapper, times(1)).toDto(event);
-        verify(eventMapper, never()).toDto(event2);
     }
 
     @Test
@@ -285,46 +256,43 @@ class EventServiceTest {
         // Arrange
         filter = new EventFilterDto();
         filter.setSkillIds(Collections.singletonList(1L));
+        filter.setTitleContains("Test Event");
 
-        List<Event> events = Arrays.asList(event, event2);
+        List<Event> events = Arrays.asList(event1, event2);
 
         when(eventRepository.findAll()).thenReturn(events);
-        when(eventMapper.toDto(event)).thenReturn(eventDto);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // Act
         List<EventDto> result = eventService.getEventsByFilter(filter);
 
-        assertEquals(2, result.size(), "Should return exactly one event matching all filter criteria");
         EventDto returnedEvent = result.get(0);
-        assertEquals("Test Event", returnedEvent.getTitle(), "Should return event with matching title");
+        assertTrue(event1.getTitle().toLowerCase().contains(filter.getTitleContains().toLowerCase()));
+        assertEquals("Test Event", returnedEvent.getTitle());
 
+        // Verify all interactions
         verify(eventRepository).findAll();
-        verify(eventMapper, times(1)).toDto(event);
-        verify(eventMapper, never()).toDto(event);
+        verify(eventMapper, times(1)).toDto(event1);
 
-        assertTrue(event.getTitle().toLowerCase().contains(filter.getTitleContains().toLowerCase()),
-                "Event title should contain filter text");
-        assertEquals(event.getLocation().toLowerCase(), filter.getLocation().toLowerCase(),
-                "Event location should match filter");
-        assertTrue(event.getRelatedSkills().stream()
-                        .map(Skill::getId)
-                        .anyMatch(filter.getSkillIds()::contains),
-                "Event should have matching skill ID");
+        // Assert
+        assertTrue(event1.getRelatedSkills().stream()
+                .map(Skill::getId)
+                .anyMatch(filter.getSkillIds()::contains));
     }
 
     @Test
     @DisplayName("Should return event when valid ID provided")
     void getEvent_WithValidId_ShouldReturnEvent() {
         // given
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(eventMapper.toDto(event)).thenReturn(eventDto);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event1));
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // when
         EventDto result = eventService.getEvent(1L);
 
         // then
         assertNotNull(result);
-        assertEquals(eventDto.getId(), result.getId());
+        assertEquals(eventDto1.getId(), result.getId());
     }
 
     @Test
@@ -365,27 +333,42 @@ class EventServiceTest {
     void updateEvent_WithValidData_ShouldSucceed() {
         // given
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(eventMapper.toEntity(eventDto)).thenReturn(event);
-        when(eventRepository.save(any(Event.class))).thenReturn(event);
-        when(eventMapper.toDto(event)).thenReturn(eventDto);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event1));
+        when(eventMapper.toEntity(eventDto1)).thenReturn(event1);
+        when(eventRepository.save(any(Event.class))).thenReturn(event1);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // when
-        EventDto result = eventService.updateEvent(eventDto);
+        EventDto result = eventService.updateEvent(eventDto1);
 
         // then
         assertNotNull(result);
-        assertEquals(eventDto.getId(), result.getId());
+        assertEquals(eventDto1.getId(), result.getId());
         verify(eventRepository).save(any(Event.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when event not found")
+    void updateEvent_WhenEventNotFound_ThrowsException() {
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eventRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(DataValidationException.class, () -> {
+            eventService.updateEvent(eventDto1);
+        });
+
+        verify(eventRepository).findById(1L);
+        verify(eventRepository, never()).save(any(Event.class));
     }
 
     @Test
     @DisplayName("Should return owned events for given user ID")
     void getOwnedEvents_WithUserId_ShouldReturnUserEvents() {
         // given
-        List<Event> events = Arrays.asList(event);
+        List<Event> events = Collections.singletonList(event1);
         when(eventRepository.findAllByUserId(1L)).thenReturn(events);
-        when(eventMapper.toDto(event)).thenReturn(eventDto);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // when
         List<EventDto> results = eventService.getOwnedEvents(1L);
@@ -393,16 +376,16 @@ class EventServiceTest {
         // then
         assertFalse(results.isEmpty());
         assertEquals(1, results.size());
-        assertEquals(eventDto.getId(), results.get(0).getId());
+        assertEquals(eventDto1.getId(), results.get(0).getId());
     }
 
     @Test
     @DisplayName("Should return participated events for given user ID")
     void getParticipatedEvents_WithUserId_ShouldReturnEvents() {
         // given
-        List<Event> events = Arrays.asList(event);
+        List<Event> events = Collections.singletonList(event1);
         when(eventRepository.findParticipatedEventsByUserId(1L)).thenReturn(events);
-        when(eventMapper.toDto(event)).thenReturn(eventDto);
+        when(eventMapper.toDto(event1)).thenReturn(eventDto1);
 
         // when
         List<EventDto> results = eventService.getParticipatedEvents(1L);
@@ -410,21 +393,86 @@ class EventServiceTest {
         // then
         assertFalse(results.isEmpty());
         assertEquals(1, results.size());
-        assertEquals(eventDto.getId(), results.get(0).getId());
+        assertEquals(eventDto1.getId(), results.get(0).getId());
     }
 
-    private User createUserWithSkills(Long id, List<Skill> skills) {
-        User user = new User();
-        user.setId(id);
-        user.setSkills(skills);
-        return user;
+    private User createDefaultUser() {
+        return User.builder()
+                .id(USER_ID)
+                .skills(createDefaultSkillsList())
+                .build();
     }
 
-    private EventDto createEventDto(Long id, Long userId, Set<SkillDto> skills) {
-        EventDto eventDto = new EventDto();
-        eventDto.setId(id);
-        eventDto.setOwnerId(userId);
-        eventDto.setRelatedSkills(eventSkills);
-        return eventDto;
+    private List<Skill> createDefaultSkillsList() {
+        return Arrays.asList(
+                createSkill(1L, "Java"),
+                createSkill(2L, "Kotlin")
+        );
+    }
+
+    private User createUserWithInvalidSkills() {
+        return User.builder()
+                .id(USER_ID)
+                .skills(createInvalidSkillsList())
+                .build();
+    }
+
+    private List<Skill> createInvalidSkillsList() {
+        return Arrays.asList(
+                createSkill(3L, "JS"),
+                createSkill(4L, "REACT")
+        );
+    }
+
+    private Skill createSkill(Long id, String title) {
+        return Skill.builder()
+                .id(id)
+                .title(title)
+                .build();
+    }
+
+    private List<SkillDto> createDefaultSkillDtoList() {
+        return Arrays.asList(
+                createSkillDto(1L, "Java"),
+                createSkillDto(2L, "Kotlin")
+        );
+    }
+
+    private SkillDto createSkillDto(Long id, String title) {
+        return SkillDto.builder()
+                .id(id)
+                .title(title)
+                .build();
+    }
+
+    private EventDto createDefaultEventDto(Long id) {
+        return EventDto.builder()
+                .id(id)
+                .ownerId(USER_ID)
+                .title("Test Event")
+                .startDate(LocalDateTime.now().plusDays(3))
+                .endDate(LocalDateTime.now().plusDays(4))
+                .relatedSkills(createDefaultSkillDtoList())
+                .build();
+    }
+
+    private EventFilterDto createDefaultFilter() {
+        return EventFilterDto.builder()
+                .startDateFrom(LocalDateTime.now().plusDays(1))
+                .startDateTo(LocalDateTime.now().plusDays(4))
+                .location(MOSCOW)
+                .skillIds(Collections.singletonList(1L))
+                .build();
+    }
+
+    private Event createDefaultEvent(Long id, String location) {
+        return Event.builder()
+                .id(id)
+                .title("Test Event")
+                .relatedSkills(createDefaultSkillsList())
+                .startDate(LocalDateTime.now().plusDays(3))
+                .endDate(LocalDateTime.now().plusDays(4))
+                .location(location)
+                .build();
     }
 }
