@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import school.faang.user_service.entity.RequestStatus;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data

@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 public class RecommendationRequestService {
     private static final int REQUESTS_PERIOD_DAYS = 180;
     private static final RequestStatus PENDING = RequestStatus.PENDING;
-    private static final RequestStatus REJECTED = RequestStatus.REJECTED;
 
     private final RecommendationRequestRepository requestRepository;
     private final RecommendationRequestMapper requestMapper;

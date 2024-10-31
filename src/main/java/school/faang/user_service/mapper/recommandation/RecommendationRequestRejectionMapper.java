@@ -1,6 +1,5 @@
 package school.faang.user_service.mapper.recommandation;
 
-import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import school.faang.user_service.dto.recommendation.RejectionDto;
@@ -11,7 +10,4 @@ public interface RecommendationRequestRejectionMapper {
     @Mapping(source = "status", target = "status")
     @Mapping(source = "rejectionReason", target = "reason")
     RejectionDto toDto(RecommendationRequest request);
-
-    @Mapping(source = "reason", target = "rejectionReason")
-    RecommendationRequest toEntity(RejectionDto rejectionDto);
 }
