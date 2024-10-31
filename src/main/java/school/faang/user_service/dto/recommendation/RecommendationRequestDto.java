@@ -1,5 +1,6 @@
 package school.faang.user_service.dto.recommendation;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import school.faang.user_service.entity.RequestStatus;
@@ -13,6 +14,7 @@ import java.util.List;
 public class RecommendationRequestDto {
     private Long id;
     @NotNull
+    @NotEmpty
     private String message;
     private RequestStatus status;
     private String rejectionReason;

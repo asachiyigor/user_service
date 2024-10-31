@@ -44,8 +44,13 @@ public class RecommendationRequestService {
     private final SkillService skillService;
 
     @Transactional
-    public RecommendationRequestDto create(RecommendationRequestDto requestDto) {
-        validateRequestDto(requestDto);
+    public RecommendationRequestDto create(@NotNull RecommendationRequestDto requestDto) {
+        validateMessageIsEmpty(requestDto.getMessage());
+        validateRequesterReceiverNotSameUser(requestDto.getRequesterId(), requestDto.getReceiverId());
+        validateUserExist(requestDto.getRequesterId());
+        validateUserExist(requestDto.getReceiverId());
+        validateRequestPeriod(requestDto.getRequesterId(), requestDto.getReceiverId());
+        validateSkillsExist(requestDto.getSkillsIds());
 
         RecommendationRequest requestEntity = requestMapper.toEntity(requestDto);
         requestEntity.setRequester(userService.getUser(requestDto.getRequesterId()));
@@ -75,7 +80,6 @@ public class RecommendationRequestService {
                 .toList();
     }
 
-
     public RecommendationRequestDto getRequest(Long id) {
         return requestMapper.toDto(findRequestInDB(id));
     }
@@ -91,33 +95,14 @@ public class RecommendationRequestService {
         return requestRejectionMapper.toDto(requestRepository.save(request));
     }
 
-    @NotNull
-    private RecommendationRequest findRequestInDB(Long id) {
-        Optional<RecommendationRequest> requestOptional = requestRepository.findById(id);
-        if (requestOptional.isPresent()) {
-            return requestOptional.get();
-        } else {
-            throw new RuntimeException("Request id: " + id + " not found");
-        }
-    }
-
-    private void validateRequestDto(@NotNull RecommendationRequestDto requestDto) {
-        validateMessageIsEmpty(requestDto.getMessage());
-        validateRequesterNotEqualReceiver(requestDto.getRequesterId(), requestDto.getReceiverId());
-        validateUserExist(requestDto.getRequesterId());
-        validateUserExist(requestDto.getReceiverId());
-        validateRequestPeriod(requestDto.getRequesterId(), requestDto.getReceiverId());
-        validateSkillsExist(requestDto.getSkillsIds());
-    }
-
     private void validateMessageIsEmpty(@NotNull String message) {
         if (message.isEmpty()) {
             throw new DataValidationException("Recommendation request message cannot be empty");
         }
     }
 
-    private void validateRequesterNotEqualReceiver(@NotNull Long requesterId, Long receiverId) {
-        if (requesterId.equals(receiverId)) {
+    private void validateRequesterReceiverNotSameUser(@NotNull Long requesterId, Long receiverId) {
+        if (requesterId == receiverId) {
             throw new DataValidationException("Requester and receiver cannot be the same user");
         }
     }
@@ -138,13 +123,23 @@ public class RecommendationRequestService {
         }
     }
 
-    public void validateSkillsExist(List<Long> skillIds) {
+    private void validateSkillsExist(List<Long> skillIds) {
         List<Long> existingSkillIds = skillRepository.findExistingSkillIdsInDB(skillIds);
         List<Long> missingSkills = skillIds.stream()
                 .filter(skillId -> !existingSkillIds.contains(skillId))
                 .toList();
         if (!missingSkills.isEmpty()) {
             throw new DataValidationException("Skills: " + missingSkills + " not found in database");
+        }
+    }
+
+    @NotNull
+    private RecommendationRequest findRequestInDB(Long id) {
+        Optional<RecommendationRequest> requestOptional = requestRepository.findById(id);
+        if (requestOptional.isPresent()) {
+            return requestOptional.get();
+        } else {
+            throw new RuntimeException("Request id: " + id + " not found");
         }
     }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import school.faang.user_service.entity.Skill;
+import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.repository.SkillRepository;
 
 import java.util.Optional;
@@ -22,9 +23,10 @@ public class SkillService {
         }
     }
 
-    private @NotNull Optional<Skill> findSkillByIDInDB(Long id) {
+    public @NotNull Optional<Skill> findSkillByIDInDB(Long id) {
         return skillRepository.findById(id);
     }
+
 
 
 }
