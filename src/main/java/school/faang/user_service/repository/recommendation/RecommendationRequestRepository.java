@@ -17,16 +17,9 @@ public interface RecommendationRequestRepository extends JpaRepository<Recommend
 
     @Query(nativeQuery = true, value = """
             SELECT * FROM recommendation_request
-            WHERE requester_id = ?1 AND receiver_id = ?2 AND status = 1
+            WHERE requester_id = ?1 AND receiver_id = ?2 AND status = 0
             ORDER BY created_at DESC
             LIMIT 1
             """)
     Optional<RecommendationRequest> findLatestPendingRequest(long requesterId, long receiverId);
-
-    @Query(nativeQuery = true, value = """
-            INSERT INTO recommendation_request (message, status, skillRequests, request, receiver)
-            VALUES (:message, :status, :skillRequests, :request, :receiver)
-            """)
-    @Modifying
-    RecommendationRequest create(String message, RequestStatus status, List<SkillRequest> skillRequests, User request, User receiver);
 }

@@ -1,5 +1,6 @@
 package school.faang.user_service.repository;
 
+import feign.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -48,4 +49,7 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
             WHERE gs.goal_id = ?1)
             """)
     List<Skill> findSkillsByGoalId(long goalId);
+
+    @Query("SELECT id FROM Skill WHERE id IN :skillIds")
+    List<Long> findExistingSkillIdsInDB(@Param("skillIds") List<Long> skillIds);
 }

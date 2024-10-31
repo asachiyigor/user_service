@@ -12,6 +12,6 @@ public interface RecommendationRequestRejectionMapper {
     @Mapping(source = "rejectionReason", target = "reason")
     RejectionDto toDto(RecommendationRequest request);
 
-    @InheritInverseConfiguration
+    @Mapping(source = "reason", target = "rejectionReason")
     RecommendationRequest toEntity(RejectionDto rejectionDto);
 }
