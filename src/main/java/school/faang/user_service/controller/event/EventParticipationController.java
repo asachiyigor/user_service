@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import school.faang.user_service.dto.UserDto;
-import school.faang.user_service.service.event.EventParticipationService;
+import school.faang.user_service.service.event.EventParticipationServiceInterface;
 
 import java.util.List;
 
@@ -20,25 +20,25 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/events")
 public class EventParticipationController {
-    private final EventParticipationService eventParticipationService;
+    private final EventParticipationServiceInterface eventParticipationServiceInterface;
 
     @PostMapping("register/{eventId}")
     public void registerParticipant(@PathVariable @Min(1) long eventId, @RequestParam @Min(1) long userId) {
-        eventParticipationService.registerParticipant(eventId, userId);
+        eventParticipationServiceInterface.registerParticipant(eventId, userId);
     }
 
     @DeleteMapping("unregister/{eventId}")
     public void unregisterParticipant(@PathVariable @Min(1) long eventId, @RequestParam @Min(1) long userId) {
-        eventParticipationService.unregisterParticipant(eventId, userId);
+        eventParticipationServiceInterface.unregisterParticipant(eventId, userId);
     }
 
     @GetMapping("countParticipants/{eventId}")
     public int getParticipantsCount(@PathVariable @Min(1) long eventId) {
-        return eventParticipationService.getParticipantsCount(eventId);
+        return eventParticipationServiceInterface.getParticipantsCount(eventId);
     }
 
     @GetMapping("participants/{eventId}")
     public List<UserDto> getParticipant(@PathVariable @Min(1) long eventId) {
-        return eventParticipationService.getParticipantsList(eventId);
+        return eventParticipationServiceInterface.getParticipantsList(eventId);
     }
 }

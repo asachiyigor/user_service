@@ -1,5 +1,6 @@
 package school.faang.user_service.service.validatorTests;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,37 +23,34 @@ public class EventParticipationValidatorTest {
     EventParticipationValidator eventParticipationValidator;
 
     @Mock
-    private EventParticipationRepository eventParticipationRepository;
-
-    private User createUser() {
-        return User.builder()
-                .id(2L)
-                .username("testUser")
-                .email("test@test.com")
-                .build();
-    }
+    EventParticipationRepository eventParticipationRepository;
 
     @Test
+    @DisplayName("Positive test: must return true when user is registered")
     public void mustReturnTrueWhenUserIsRegistered() {
         long eventId = 1L;
-        User exitingUser = createUser();
+        User expectedUser = createUser();
 
         when(eventParticipationRepository.findAllParticipantsByEventId(eventId))
-                .thenReturn(Collections.singletonList(exitingUser));
+                .thenReturn(Collections.singletonList(expectedUser));
 
-        assertTrue(eventParticipationValidator.isUserRegistered(eventId, exitingUser.getId(),
+        assertTrue(eventParticipationValidator.isUserRegistered(eventId, expectedUser.getId(),
                 eventParticipationRepository));
     }
 
     @Test
+    @DisplayName("Negative test: must return false when user is not registered")
     public void mustReturnTrueWhenUserIsNotRegistered() {
         long eventId = 1L;
         User exitingUser = createUser();
 
-        when(eventParticipationRepository.findAllParticipantsByEventId(eventId))
-                .thenReturn(Collections.emptyList());
+        when(eventParticipationRepository.findAllParticipantsByEventId(eventId)).thenReturn(Collections.emptyList());
 
         assertFalse(eventParticipationValidator.isUserRegistered(1L, exitingUser.getId(),
                 eventParticipationRepository));
+    }
+
+    private User createUser() {
+        return User.builder().id(2L).username("testUser").email("test@test.com").build();
     }
 }
