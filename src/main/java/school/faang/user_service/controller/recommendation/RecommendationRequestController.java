@@ -12,26 +12,27 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/user-service/recommendation-requests")
 @Validated
 public class RecommendationRequestController {
     private final RecommendationRequestService recommendationRequestService;
 
-    @PostMapping("/recommendation-requests/create")
+    @PostMapping("/create")
     public RecommendationRequestDto requestRecommendation(@RequestBody RecommendationRequestDto recommendationRequestDto) {
         return recommendationRequestService.create(recommendationRequestDto);
     }
 
-    @PostMapping("/recommendation-requests/filter")
+    @PostMapping("/filter")
     public List<RecommendationRequestDto> getRecommendationRequests(@RequestBody RequestFilterDto filterDto) {
         return recommendationRequestService.getRequests(filterDto);
     }
 
-    @GetMapping("/recommendation-requests/{id}")
+    @GetMapping("/{id}")
     public RecommendationRequestDto getRecommendationRequest(@PathVariable Long id) {
         return recommendationRequestService.getRequest(id);
     }
 
-    @PostMapping("/recommendation-requests/{id}/reject")
+    @PostMapping("/{id}/reject")
     public RejectionDto rejectRequest(@PathVariable Long id, @RequestBody RejectionDto rejectionDto) {
         return recommendationRequestService.rejectRequest(id, rejectionDto);
     }
