@@ -1,4 +1,4 @@
-package school.faang.user_service.controller.recommendation;
+package school.faang.user_service.controller.goal;
 
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import school.faang.user_service.dto.goal.GoalInvitationDto;
 import school.faang.user_service.dto.goal.InvitationFilterIDto;
 import school.faang.user_service.entity.RequestStatus;
+import school.faang.user_service.service.goal.GoalInvitationService;
 
 import java.util.List;
 import java.util.zip.DataFormatException;

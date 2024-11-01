@@ -1,7 +1,9 @@
-package school.faang.user_service.controller.recommendation;
+package school.faang.user_service.service.goal;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import school.faang.user_service.dto.goal.GoalInvitationDto;
 import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.User;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Validated
 @RequiredArgsConstructor
 public class GoalInvitationService {
     private final GoalInvitationMapper invitationMapper;
@@ -25,9 +28,10 @@ public class GoalInvitationService {
     private final GoalRepository goalRepository;
     private static final int MAX_GOALS = 3;
 
+    @Transactional
     public GoalInvitationDto createInvitation(Long inviterId, Long invitedId, Long goalId, RequestStatus status) {
         if (inviterId == null || invitedId == null || goalId == null || status == null) {
-            throw new DataValidationException("Аргументы не должны быть null");
+            throw new DataValidationException("Arguments is null");
         }
         GoalInvitation invitation = new GoalInvitation();
         Optional<Goal> goal = goalRepository.findById(goalId);
@@ -88,28 +92,20 @@ public class GoalInvitationService {
     public List<Long> getInvitations(String patternInviter, String patternInvited,
                                      Long filterInviterById, Long filterInvitedById, RequestStatus status) {
         List<GoalInvitation> allGoalInvitations = goalInvitationRepository.findAll();
-        if (patternInviter.isBlank()) {
+        if (patternInviter == null || patternInviter.isBlank()) {
             throw new DataValidationException("inviter состоит из одних пробелов");
         }
-        allGoalInvitations = allGoalInvitations.stream()
-                .filter(invitation -> invitation.getInviter().getUsername().equals(patternInviter)).toList();
-        if (!patternInvited.isEmpty() && !patternInvited.isBlank()) {
-            allGoalInvitations = allGoalInvitations.stream()
-                    .filter(invitation -> invitation.getInvited().getUsername().equals(patternInvited)).toList();
-        }
-        if (filterInviterById != null) {
-            allGoalInvitations = allGoalInvitations.stream()
-                    .filter(invitation -> invitation.getInviter().getId().equals(filterInviterById)).toList();
-        }
-        if (filterInvitedById != null) {
-            allGoalInvitations = allGoalInvitations.stream()
-                    .filter(invitation -> invitation.getInvited().getId().equals(filterInvitedById)).toList();
-        }
-        if (status != null) {
-            allGoalInvitations = allGoalInvitations.stream()
-                    .filter(invitation -> invitation.getStatus().equals(status)).toList();
-        }
         return allGoalInvitations.stream()
-                .map(GoalInvitation::getId).toList();
+                .filter(invitation -> invitation.getInviter() != null &&
+                        invitation.getInviter().getUsername().equals(patternInviter))
+                .filter(invitation -> patternInvited == null || patternInvited.isBlank() ||
+                        (invitation.getInvited() != null && invitation.getInvited().getUsername().equals(patternInvited)))
+                .filter(invitation -> filterInviterById == null || (invitation.getInviter().getId().equals(filterInviterById)))
+                .filter(invitation -> filterInvitedById == null ||
+                        (invitation.getInvited() != null && invitation.getInvited().getId().equals(filterInvitedById)))
+                .filter(invitation -> status == null || invitation.getStatus().equals(status))
+                .map(GoalInvitation::getId)
+                .distinct() // если нужно, чтобы идентификаторы были уникальными
+                .toList();
     }
 }

@@ -12,16 +12,8 @@ import school.faang.user_service.entity.RequestStatus;
 @AllArgsConstructor
 public class GoalInvitationDto {
     private Long id;
-
-    @NotNull
     private Long inviterId;
-
-    @NotNull
     private Long invitedUserId;
-
-    @NotNull
     private Long goalId;
-
-    @NotNull
     private RequestStatus status;
 }
