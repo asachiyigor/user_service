@@ -30,6 +30,29 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
+    @Mock
+    private EventRepository eventRepository;
+    @Mock
+    private EventMapper eventMapper;
+    @Mock
+    private UserRepository userRepository;
+    @InjectMocks
+    private EventService eventService;
+
+    private EventDto eventDto1;
+    private EventDto eventDto2;
+    private Event event1;
+    private Event event2;
+    private User user;
+    private User user2;
+    private EventFilterDto filter;
+
+    private static final Long USER_ID = 1L;
+    private static final Long EVENT_ID_1 = 1L;
+    private static final Long EVENT_ID_2 = 2L;
+    private static final String MOSCOW = "Moscow";
+    private static final String LONDON = "London";
+
     @BeforeEach
     void setUp() {
         user = createDefaultUser();
@@ -449,30 +472,4 @@ class EventServiceTest {
                 .location(location)
                 .build();
     }
-
-    @Mock
-    private EventRepository eventRepository;
-
-    @Mock
-    private EventMapper eventMapper;
-
-    @Mock
-    private UserRepository userRepository;
-
-    @InjectMocks
-    private EventService eventService;
-
-    private EventDto eventDto1;
-    private EventDto eventDto2;
-    private Event event1;
-    private Event event2;
-    private User user;
-    private User user2;
-    private EventFilterDto filter;
-
-    private static final Long USER_ID = 1L;
-    private static final Long EVENT_ID_1 = 1L;
-    private static final Long EVENT_ID_2 = 2L;
-    private static final String MOSCOW = "Moscow";
-    private static final String LONDON = "London";
 }

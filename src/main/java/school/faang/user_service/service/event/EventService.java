@@ -52,7 +52,6 @@ public class EventService {
         eventRepository.deleteById(eventId);
     }
 
-    @Transactional
     public EventDto updateEvent(EventDto eventDto) {
         validateUserSkills(eventDto);
         eventRepository.findById(eventDto.getId())
