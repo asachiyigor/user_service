@@ -19,7 +19,7 @@ import java.util.zip.DataFormatException;
 
 @Validated
 @RestController
-@RequestMapping("/goal-invitations")
+@RequestMapping("/goal-invitations/")
 @RequiredArgsConstructor
 public class GoalInvitationController {
     private final GoalInvitationService goalInvitationService;
@@ -37,7 +37,7 @@ public class GoalInvitationController {
     }
 
     @PostMapping("accept/{id}")
-    public boolean acceptGoalInvitation(@PathVariable Long id) {
+    public GoalInvitationDto acceptGoalInvitation(@PathVariable Long id) throws DataFormatException {
         if (id == null) {
             throw new IllegalArgumentException("в метод acceptGoalInvitation пришли пустые данне");
         }
@@ -59,9 +59,6 @@ public class GoalInvitationController {
         Long filterInviterById = filter.getInviterId();
         Long filterInvitedById = filter.getInvitedId();
         RequestStatus status = filter.getStatus();
-        if (patternInviter.isEmpty() || patternInvited.isEmpty() || filterInviterById == null || filterInvitedById == null || status == null) {
-            throw new IllegalArgumentException("в метод getInvitations пришли пустые данне");
-        }
         return goalInvitationService.getInvitations(patternInviter, patternInvited,
                 filterInviterById, filterInvitedById, status);
     }

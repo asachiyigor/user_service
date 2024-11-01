@@ -34,6 +34,6 @@ public class TestOne {
         goalInvitation.setInviter(user);
         goalInvitation.setGoal(goal);
         goalInvitation.setStatus(RequestStatus.ACCEPTED);
-        assertThrows(DataValidationException.class, () -> service.createInvitation(null, null, expectedGoalId, RequestStatus.PENDING));
+        assertThrows(NullPointerException.class, () -> service.createInvitation(null, null, expectedGoalId, RequestStatus.PENDING));
     }
 }

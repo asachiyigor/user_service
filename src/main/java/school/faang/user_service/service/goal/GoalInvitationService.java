@@ -17,6 +17,7 @@ import school.faang.user_service.repository.goal.GoalRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.zip.DataFormatException;
 
 @Service
 @Validated
@@ -29,29 +30,23 @@ public class GoalInvitationService {
     private static final int MAX_GOALS = 3;
 
     @Transactional
-    public GoalInvitationDto createInvitation(Long inviterId, Long invitedId, Long goalId, RequestStatus status) {
-        if (inviterId == null || invitedId == null || goalId == null || status == null) {
-            throw new DataValidationException("Arguments is null");
-        }
+    public GoalInvitationDto createInvitation(Long inviterId, Long invitedId, Long goalId, RequestStatus status) throws DataValidationException {
         GoalInvitation invitation = new GoalInvitation();
-        Optional<Goal> goal = goalRepository.findById(goalId);
-        Optional<User> invitedUser = userRepository.findById(invitedId);
-        Optional<User> inviterUser = userRepository.findById(inviterId);
-        if (goal.isEmpty()) {
-            throw new DataValidationException("Goal equals null");
-        }
-        if (invitation.getInviter() == invitation.getInvited() || invitedUser.isEmpty() || inviterUser.isEmpty()) {
+        Goal goal = goalRepository.findById(goalId).orElseThrow(() -> new DataValidationException("Goal not found"));
+        User invitedUser = userRepository.findById(invitedId).orElseThrow(() -> new DataValidationException("User not found"));
+        User inviterUser = userRepository.findById(inviterId).orElseThrow(() -> new DataValidationException("Inviter not found"));
+        if (invitation.getInviter() == invitation.getInvited() ) {
             throw new DataValidationException("Users must be unequal and real");
         }
-        invitation.setInvited(invitedUser.get());
-        invitation.setInviter(inviterUser.get());
-        invitation.setGoal(goal.get());
+        invitation.setInvited(invitedUser);
+        invitation.setInviter(inviterUser);
+        invitation.setGoal(goal);
         invitation.setStatus(status);
         invitation = goalInvitationRepository.save(invitation);
         return invitationMapper.toDto(invitation);
     }
 
-    public boolean acceptGoalInvitation(long id) {
+    public GoalInvitationDto acceptGoalInvitation(long id) throws DataFormatException {
         Optional<GoalInvitation> goalInvited = goalInvitationRepository.findById(id);
         if (goalInvited.isEmpty()) {
             throw new DataValidationException("GoalInvitation id not found");
@@ -61,19 +56,17 @@ public class GoalInvitationService {
         User invitedUser = goalInvitation.getInvited();
         if (invitedUser.getGoals().size() >= MAX_GOALS) {
             rejectGoalInvitation(id);
-            return false;
+            return invitationMapper.toDto(goalInvitation);
         }
-        Optional<Goal> targetGoal = goalRepository.findById(goalInvitation.getGoal().getId());
-        if (targetGoal.isEmpty()) {
-            throw new IllegalArgumentException("Goal id not found");
-        }
+        goalRepository.findById(goalInvitation.getGoal().getId()).orElseThrow(DataFormatException::new);
         invitedUser.getGoals().add(goalInvitation.getGoal());
         invitedUser.getReceivedGoalInvitations().add(goalInvitation);
         goalInvitation.setStatus(RequestStatus.ACCEPTED);
 
-        goalInvitationRepository.save(goalInvitation);
+
         userRepository.save(invitedUser);
-        return true;
+        goalInvitation = goalInvitationRepository.save(goalInvitation);
+        return invitationMapper.toDto(goalInvitation);
     }
 
     public void rejectGoalInvitation(long id) {
@@ -105,7 +98,6 @@ public class GoalInvitationService {
                         (invitation.getInvited() != null && invitation.getInvited().getId().equals(filterInvitedById)))
                 .filter(invitation -> status == null || invitation.getStatus().equals(status))
                 .map(GoalInvitation::getId)
-                .distinct() // если нужно, чтобы идентификаторы были уникальными
                 .toList();
     }
 }
