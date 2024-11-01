@@ -27,3 +27,5 @@ public interface SkillMapper {
         return skillsList.stream().map(this::candidateToDto).toList();
     }
 }
+
+

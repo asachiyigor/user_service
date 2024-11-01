@@ -9,3 +9,4 @@ public class SkillCandidateDto {
     private SkillDto skill;
     private long offersAmount;
 }
+

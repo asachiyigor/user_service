@@ -32,3 +32,5 @@ public class SkillController {
         return acquireSkillFromOffers(skillId, userId);
     }
 }
+
+
