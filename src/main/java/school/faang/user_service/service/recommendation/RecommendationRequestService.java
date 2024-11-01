@@ -14,7 +14,6 @@ import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapper;
-import school.faang.user_service.repository.SkillRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
 import school.faang.user_service.service.skil.SkillRequestService;
 import school.faang.user_service.service.skil.SkillService;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 
 @Service
@@ -39,7 +37,6 @@ public class RecommendationRequestService {
     private final RecommendationRequestMapper requestMapper;
     private final RecommendationRequestRejectionMapper requestRejectionMapper;
     private final List<Filter<RecommendationRequest>> filters;
-    private final SkillRepository skillRepository;
     private final UserService userService;
     private final SkillRequestService skillRequestService;
     private final SkillService skillService;
@@ -108,7 +105,7 @@ public class RecommendationRequestService {
     }
 
     private void validateRequesterReceiverNotSameUser(@NotNull Long requesterId, Long receiverId) {
-        if (requesterId == receiverId) {
+        if (requesterId.equals(receiverId)) {
             throw new DataValidationException("Requester and receiver cannot be the same user");
         }
     }
