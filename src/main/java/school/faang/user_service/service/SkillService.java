@@ -33,6 +33,12 @@ public class SkillService {
         }
     }
 
+    public void validateUser(@NotNull long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new DataValidationException("Пользователь с данным ID нет");
+        }
+    }
+
     public SkillDto create(@NotNull SkillDto skill) {
         Skill skillEntity = skillMapper.toEntity(skill);
         validateSkill(skill);
@@ -41,33 +47,27 @@ public class SkillService {
     }
 
     public List<SkillDto> getUserSkills(@NotNull long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new DataValidationException("Пользователь с данным ID нет");
-        }
+        validateUser(userId);
         List<Skill> skillList = skillRepository.findAllByUserId(userId);
         return skillMapper.listSkillToDto(skillList);
     }
 
     public List<SkillCandidateDto> getOfferedSkills(@NotNull long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new DataValidationException("Такого пользователя нет");
-        }
+        validateUser(userId);
 
         List<Skill> skillsList = skillRepository.findSkillsOfferedToUser(userId);
-        List<SkillCandidateDto> skillCandidate = skillMapper.skillCandidateToDto(skillsList);
+        List<SkillCandidateDto> skillCandidatesDto = skillMapper.skillCandidateToDto(skillsList);
 
-        for (SkillCandidateDto candidate : skillCandidate) {
+        for (SkillCandidateDto candidate : skillCandidatesDto) {
             long skillId = candidate.getSkill().getId();
             int offersAmount = skillOfferRepository.countAllOffersOfSkill(skillId, userId);
             candidate.setOffersAmount(offersAmount);
         }
-        return skillCandidate;
+        return skillCandidatesDto;
     }
 
     public List<SkillOffer> acquireSkillFromOffers(@NotNull long skillId, long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new DataValidationException("Такого пользователя нет");
-        }
+        validateUser(userId);
 
         if (!skillRepository.existsById(skillId)) {
             throw new DataValidationException("Такого навыка нет");
