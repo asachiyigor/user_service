@@ -23,23 +23,23 @@ public class EventController {
 
     private final EventService eventService;
 
-    @PostMapping
+    @PostMapping()
     public EventDto create(@RequestBody EventDto event) {
         validateEvent(event);
         return eventService.create(event);
     }
 
-    @GetMapping("/events/{id}")
+    @GetMapping("/{id}")
     public EventDto getEvent(@PathVariable Long id) {
         return eventService.getEvent(id);
     }
 
-    @GetMapping("events/filter")
+    @GetMapping("/filter")
     public List<EventDto> getEventsByFilter(@RequestBody EventFilterDto filter) {
         return eventService.getEventsByFilter(filter);
     }
 
-    @DeleteMapping("events/{id}")
+    @DeleteMapping("/{id}")
     public void deleteEvent(@PathVariable Long id) {
         eventService.deleteEvent(id);
     }
@@ -50,15 +50,16 @@ public class EventController {
         return eventService.updateEvent(event);
     }
 
-    @GetMapping("events/owned/{userId}")
+    @GetMapping("/owned/{userId}")
     public List<EventDto> getOwnedEvents(@PathVariable Long userId) {
         return eventService.getOwnedEvents(userId);
     }
 
-    @GetMapping("events/participated/{userId}")
+    @GetMapping("/participated/{userId}")
     public List<EventDto> getParticipatedEvents(@PathVariable Long userId) {
         return eventService.getParticipatedEvents(userId);
     }
+
     private void validateEvent(EventDto event) {
         if (event.getTitle() == null || event.getTitle().trim().isEmpty()) {
             throw new DataValidationException("Event title cannot be empty");

@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import school.faang.user_service.dto.event.EventDto;
 import school.faang.user_service.dto.event.EventFilterDto;
-import school.faang.user_service.dto.skill.SkillDto;
 import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.event.Event;
@@ -18,7 +17,6 @@ import school.faang.user_service.mapper.EventMapper;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.event.EventRepository;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +25,16 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static school.faang.user_service.util.TestDataFactory.createDefaultFilter;
+import static school.faang.user_service.util.TestDataFactory.createDefaultUser;
+import static school.faang.user_service.util.TestDataFactory.createUserWithInvalidSkills;
+import static school.faang.user_service.util.TestDataFactory.createDefaultEventDto;
+import static school.faang.user_service.util.TestDataFactory.createDefaultEvent;
+import static school.faang.user_service.util.TestDataFactory.EVENT_ID_1;
+import static school.faang.user_service.util.TestDataFactory.EVENT_ID_2;
+import static school.faang.user_service.util.TestDataFactory.MOSCOW;
+import static school.faang.user_service.util.TestDataFactory.LONDON;
+import static school.faang.user_service.util.TestDataFactory.USER_ID;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -46,12 +54,6 @@ class EventServiceTest {
     private User user;
     private User user2;
     private EventFilterDto filter;
-
-    private static final Long USER_ID = 1L;
-    private static final Long EVENT_ID_1 = 1L;
-    private static final Long EVENT_ID_2 = 2L;
-    private static final String MOSCOW = "Moscow";
-    private static final String LONDON = "London";
 
     @BeforeEach
     void setUp() {
@@ -391,85 +393,5 @@ class EventServiceTest {
         assertFalse(results.isEmpty());
         assertEquals(1, results.size());
         assertEquals(eventDto1.getId(), results.get(0).getId());
-    }
-
-    private User createDefaultUser() {
-        return User.builder()
-                .id(USER_ID)
-                .skills(createDefaultSkillsList())
-                .build();
-    }
-
-    private List<Skill> createDefaultSkillsList() {
-        return Arrays.asList(
-                createSkill(1L, "Java"),
-                createSkill(2L, "Kotlin")
-        );
-    }
-
-    private User createUserWithInvalidSkills() {
-        return User.builder()
-                .id(USER_ID)
-                .skills(createInvalidSkillsList())
-                .build();
-    }
-
-    private List<Skill> createInvalidSkillsList() {
-        return Arrays.asList(
-                createSkill(3L, "JS"),
-                createSkill(4L, "REACT")
-        );
-    }
-
-    private Skill createSkill(Long id, String title) {
-        return Skill.builder()
-                .id(id)
-                .title(title)
-                .build();
-    }
-
-    private List<SkillDto> createDefaultSkillDtoList() {
-        return Arrays.asList(
-                createSkillDto(1L, "Java"),
-                createSkillDto(2L, "Kotlin")
-        );
-    }
-
-    private SkillDto createSkillDto(Long id, String title) {
-        return SkillDto.builder()
-                .id(id)
-                .title(title)
-                .build();
-    }
-
-    private EventDto createDefaultEventDto(Long id) {
-        return EventDto.builder()
-                .id(id)
-                .ownerId(USER_ID)
-                .title("Test Event")
-                .startDate(LocalDateTime.now().plusDays(3))
-                .endDate(LocalDateTime.now().plusDays(4))
-                .relatedSkills(createDefaultSkillDtoList())
-                .build();
-    }
-
-    private EventFilterDto createDefaultFilter() {
-        return EventFilterDto.builder()
-                .startDateFrom(LocalDateTime.now().plusDays(1))
-                .startDateTo(LocalDateTime.now().plusDays(4))
-                .location(MOSCOW)
-                .skillIds(Collections.singletonList(1L))
-                .build();
-    }
-
-    private Event createDefaultEvent(Long id, String location) {
-        return Event.builder()
-                .id(id)
-                .title("Test Event")
-                .relatedSkills(createDefaultSkillsList())
-                .startDate(LocalDateTime.now().plusDays(3))
-                .endDate(LocalDateTime.now().plusDays(4))
-                .location(location)
-                .build();
     }
 }
