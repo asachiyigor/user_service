@@ -1,7 +1,7 @@
 package school.faang.user_service.controller.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,9 +11,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import school.faang.user_service.dto.event.EventDto;
 import school.faang.user_service.dto.event.EventFilterDto;
+import school.faang.user_service.dto.skill.SkillDto;
 import school.faang.user_service.service.event.EventService;
-import school.faang.user_service.util.TestDataFactory;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -35,16 +36,26 @@ public class EventControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static EventDto eventDto;
+    private EventDto createValidEventDto() {
+        EventDto eventDto = EventDto.builder()
+                .id(1L)
+                .title("Test Event")
+                .description("Test Description")
+                .startDate(LocalDateTime.now().plusDays(1))
+                .endDate(LocalDateTime.now().plusDays(2))
+                .ownerId(1L)
+                .location("Test Location")
+                .build();
 
-    @BeforeEach
-    void setUp() {
-        eventDto = TestDataFactory.createDefaultEventDto(TestDataFactory.EVENT_ID_1);
+        SkillDto skillDto = new SkillDto(1L, "Java");
+        eventDto.setRelatedSkills(List.of(skillDto));
+
+        return eventDto;
     }
-
     @Test
+    @DisplayName("Get Event - Existing ID returns correct event details")
     public void getEvent_ExistingId_ReturnsEvent() throws Exception {
-
+        EventDto eventDto = createValidEventDto();
         when(eventService.getEvent(1L)).thenReturn(eventDto);
 
         mockMvc.perform(get("/api/events/1"))
@@ -56,10 +67,11 @@ public class EventControllerTest {
     }
 
     @Test
+    @DisplayName("Get Events by Filter - Valid filter returns filtered events")
     public void getEventsByFilter_ValidFilter_ReturnsFilteredEvents() throws Exception {
         EventFilterDto filterDto = new EventFilterDto();
         filterDto.setTitleContains("Test");
-        List<EventDto> filteredEvents = List.of(eventDto);
+        List<EventDto> filteredEvents = List.of(createValidEventDto());
 
         when(eventService.getEventsByFilter(any(EventFilterDto.class))).thenReturn(filteredEvents);
 
@@ -74,6 +86,7 @@ public class EventControllerTest {
     }
 
     @Test
+    @DisplayName("Delete Event - Existing ID returns no content status")
     public void deleteEvent_ExistingId_ReturnsNoContent() throws Exception {
         doNothing().when(eventService).deleteEvent(1L);
 
@@ -84,8 +97,9 @@ public class EventControllerTest {
     }
 
     @Test
+    @DisplayName("Get Owned Events - Valid user ID returns user's owned events")
     public void getOwnedEvents_ValidUserId_ReturnsUserEvents() throws Exception {
-        List<EventDto> ownedEvents = List.of(eventDto);
+        List<EventDto> ownedEvents = List.of(createValidEventDto());
         when(eventService.getOwnedEvents(1L)).thenReturn(ownedEvents);
 
         mockMvc.perform(get("/api/events/owned/1"))
@@ -97,8 +111,9 @@ public class EventControllerTest {
     }
 
     @Test
+    @DisplayName("Get Participated Events - Valid user ID returns events user has participated in")
     public void getParticipatedEvents_ValidUserId_ReturnsParticipatedEvents() throws Exception {
-        List<EventDto> participatedEvents = List.of(eventDto);
+        List<EventDto> participatedEvents = List.of(createValidEventDto());
         when(eventService.getParticipatedEvents(1L)).thenReturn(participatedEvents);
 
         mockMvc.perform(get("/api/events/participated/1"))
