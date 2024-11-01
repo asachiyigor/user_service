@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@NotNull
-@NotEmpty
 public class SkillDto {
     private Long id;
+
+    @NotNull(message = "Title не может быть null")
+    @NotEmpty
     private String title;
 }
 
