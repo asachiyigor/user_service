@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 
 @Service
@@ -58,13 +59,13 @@ public class RecommendationRequestService {
         requestEntity.setStatus(PENDING);
         RecommendationRequest request = requestRepository.save(requestEntity);
         request.setSkills(new ArrayList<>());
-        for (Long skillId : requestDto.getSkillsIds()) {
-            Skill skill = skillService.getSkill(skillId);
+        List<Skill> skills = skillService.findAll(requestDto.getSkillsIds());
+        skills.forEach(skill -> {
             SkillRequest skillRequest = skillRequestService.create(request, skill);
             request.getSkills().add(skillRequest);
-        }
+        });
 
-        return requestMapper.toDto(request);
+        return requestMapper.toDto(requestRepository.save(request));
     }
 
     public List<RecommendationRequestDto> getRequests(RequestFilterDto filterDto) {
@@ -85,14 +86,19 @@ public class RecommendationRequestService {
     }
 
     @Transactional
-    public RejectionDto rejectRequest(Long id, RejectionDto rejectionDto) {
+    public RejectionDto rejectRequest(Long id, @NotNull RejectionDto rejectionDto) {
         RecommendationRequest request = findRequestInDB(id);
-        if (!request.getStatus().equals(PENDING)) {
-            throw new DataValidationException("Request id: " + id + " cannot be rejected");
-        }
+        validateRequestOnStatusPending(request);
+
         request.setRejectionReason(rejectionDto.getReason());
         request.setStatus(rejectionDto.getStatus());
         return requestRejectionMapper.toDto(requestRepository.save(request));
+    }
+
+    private void validateRequestOnStatusPending(@NotNull RecommendationRequest request) {
+        if (!request.getStatus().equals(PENDING)) {
+            throw new DataValidationException("Request cannot be rejected: id=" + request.getId());
+        }
     }
 
     private void validateMessageIsEmpty(@NotNull String message) {
@@ -109,7 +115,7 @@ public class RecommendationRequestService {
 
     private void validateUserExist(Long userId) {
         if (!userService.isUserExistInDB(userId)) {
-            throw new DataValidationException("User id: { " + userId + " } not found in database");
+            throw new DataValidationException("User not found in database: id=" + userId);
         }
     }
 
@@ -124,12 +130,12 @@ public class RecommendationRequestService {
     }
 
     private void validateSkillsExist(List<Long> skillIds) {
-        List<Long> existingSkillIds = skillRepository.findExistingSkillIdsInDB(skillIds);
+        List<Long> existingSkillIds = skillService.findExistingSkills(skillIds);
         List<Long> missingSkills = skillIds.stream()
                 .filter(skillId -> !existingSkillIds.contains(skillId))
                 .toList();
         if (!missingSkills.isEmpty()) {
-            throw new DataValidationException("Skills: " + missingSkills + " not found in database");
+            throw new DataValidationException("Skills not found in database: ids" + missingSkills);
         }
     }
 
@@ -139,7 +145,7 @@ public class RecommendationRequestService {
         if (requestOptional.isPresent()) {
             return requestOptional.get();
         } else {
-            throw new RuntimeException("Request id: " + id + " not found");
+            throw new RuntimeException("Request not found: id=" + id);
         }
     }
 }

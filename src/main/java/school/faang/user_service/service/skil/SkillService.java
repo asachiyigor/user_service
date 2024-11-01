@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import school.faang.user_service.entity.Skill;
-import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.repository.SkillRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -28,5 +28,11 @@ public class SkillService {
     }
 
 
+    public List<Skill> findAll(List<Long> skillsIds) {
+        return skillRepository.findAllById(skillsIds).stream().toList();
+    }
 
+    public List<Long> findExistingSkills(List<Long> ids) {
+        return skillRepository.findExistingSkillIdsInDB(ids);
+    }
 }
