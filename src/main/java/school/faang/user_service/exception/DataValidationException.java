@@ -5,5 +5,3 @@ public class DataValidationException extends RuntimeException {
         super(message);
     }
 }
-
-
