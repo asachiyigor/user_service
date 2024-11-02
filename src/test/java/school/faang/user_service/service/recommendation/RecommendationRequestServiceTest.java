@@ -21,7 +21,6 @@ import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapper;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
-import school.faang.user_service.service.recommendation.filter.MessageFilter;
 import school.faang.user_service.service.recommendation.filter.StatusFilter;
 import school.faang.user_service.service.skil.SkillRequestService;
 import school.faang.user_service.service.skil.SkillService;
@@ -49,8 +48,6 @@ public class RecommendationRequestServiceTest {
     private SkillRequestService skillRequestService;
     @Mock
     private Filter<RecommendationRequest> statusFilter;
-    @Mock
-    private Filter<RecommendationRequest> requesterNameFilter;
     @Spy
     private RecommendationRequestMapper requestMapper = Mappers.getMapper(RecommendationRequestMapper.class);
     @Spy
