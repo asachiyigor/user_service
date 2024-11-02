@@ -67,8 +67,8 @@ public class RecommendationRequestServiceTest {
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
                 () -> requestService.create(requestDto));
-        assertTrue(dataValidationException.getMessage()
-                .contains("User not found in database"));
+
+        assertTrue(dataValidationException.getMessage().contains("User not found in database"));
     }
 
     @Test
@@ -85,6 +85,7 @@ public class RecommendationRequestServiceTest {
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
                 () -> requestService.create(requestDto));
+
         assertTrue(dataValidationException.getMessage().contains("Request period is too short"));
     }
 
@@ -104,6 +105,7 @@ public class RecommendationRequestServiceTest {
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
                 () -> requestService.create(requestDto));
+
         assertTrue(dataValidationException.getMessage().contains("Skills not found in database"));
     }
 
@@ -122,7 +124,6 @@ public class RecommendationRequestServiceTest {
         SkillRequest skillRequestSecond = new SkillRequest(requestSaved, skillSecond);
         requestSaved.getSkills().add(skillRequestFirst);
         requestSaved.getSkills().add(skillRequestSecond);
-
 
         when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(true);
         when(userService.isUserExistByID(requestDto.getReceiverId())).thenReturn(true);
@@ -158,7 +159,6 @@ public class RecommendationRequestServiceTest {
         RequestFilterDto requestFilterDto = RequestFilterDto.builder()
                 .status(PENDING)
                 .build();
-//        List<Filter<RecommendationRequest>> filters = List.of(statusFilter, requesterNameFilter);
         statusFilter = new StatusFilter();
         List<RecommendationRequestDto> requestsDto = Arrays.asList(requestDto, getRequestDto());
         requestSaved = getRequestSaved();
@@ -216,7 +216,6 @@ public class RecommendationRequestServiceTest {
 
         assertEquals(result, rejectionDto);
     }
-
 
     private RecommendationRequestDto getRequestDto() {
         return RecommendationRequestDto.builder()
