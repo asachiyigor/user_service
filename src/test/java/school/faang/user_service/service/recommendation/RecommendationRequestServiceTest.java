@@ -141,6 +141,19 @@ public class RecommendationRequestServiceTest {
         assertEquals(2, result.getSkillsIds().size());
     }
 
+    @Test
+    @DisplayName("testGetRequestById")
+    public void testGetRequestById() {
+        requestSaved = getRequestSaved();
+        requestDto = getRequestDto();
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.ofNullable(requestSaved));
+        when(requestMapper.toDto(requestSaved)).thenReturn(requestDto);
+
+        assertEquals(requestDto, requestService.getRequest(1L));
+    }
+
+
     private RecommendationRequestDto getRequestDto() {
         return RecommendationRequestDto.builder()
                 .id(1L)
