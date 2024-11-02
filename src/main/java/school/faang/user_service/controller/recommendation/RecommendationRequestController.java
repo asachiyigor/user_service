@@ -1,5 +1,7 @@
 package school.faang.user_service.controller.recommendation;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -18,22 +20,22 @@ public class RecommendationRequestController {
     private final RecommendationRequestService recommendationRequestService;
 
     @PostMapping("/create")
-    public RecommendationRequestDto requestRecommendation(@RequestBody RecommendationRequestDto recommendationRequestDto) {
+    public RecommendationRequestDto requestRecommendation(@RequestBody @NotNull RecommendationRequestDto recommendationRequestDto) {
         return recommendationRequestService.create(recommendationRequestDto);
     }
 
     @PostMapping("/filter")
-    public List<RecommendationRequestDto> getRecommendationRequests(@RequestBody RequestFilterDto filterDto) {
+    public List<RecommendationRequestDto> getRecommendationRequests(@RequestBody @NotNull RequestFilterDto filterDto) {
         return recommendationRequestService.getRequests(filterDto);
     }
 
     @GetMapping("/{id}")
-    public RecommendationRequestDto getRecommendationRequest(@PathVariable Long id) {
+    public RecommendationRequestDto getRecommendationRequest(@PathVariable @Min(1) Long id) {
         return recommendationRequestService.getRequest(id);
     }
 
     @PostMapping("/{id}/reject")
-    public RejectionDto rejectRequest(@PathVariable Long id, @RequestBody RejectionDto rejectionDto) {
+    public RejectionDto rejectRequest(@PathVariable @Min(1) Long id, @RequestBody @NotNull RejectionDto rejectionDto) {
         return recommendationRequestService.rejectRequest(id, rejectionDto);
     }
 }

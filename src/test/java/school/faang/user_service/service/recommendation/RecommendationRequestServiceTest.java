@@ -15,7 +15,6 @@ import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
-import school.faang.user_service.mapper.recommandation.RecommendationRequestMapperImpl;
 import school.faang.user_service.repository.SkillRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
 import school.faang.user_service.service.skil.SkillService;
@@ -142,7 +141,7 @@ public class RecommendationRequestServiceTest {
         when(userService.isUserExistInDB(requestDto.getRequesterId())).thenReturn(true);
         when(userService.isUserExistInDB(requestDto.getReceiverId())).thenReturn(true);
         when(requestRepository.findLatestPendingRequest(anyLong(), anyLong())).thenReturn(Optional.of(requestDB));
-        when(skillRepository.findExistingSkillIdsInDB(requestDto.getSkillsIds())).thenReturn(existingSkillIds);
+        when(skillRepository.findExistingSkillIds(requestDto.getSkillsIds())).thenReturn(existingSkillIds);
 
         when(userService.getUser(requestDto.getRequesterId())).thenReturn(requester);
         when(userService.getUser(requestDto.getRequesterId())).thenReturn(receiver);

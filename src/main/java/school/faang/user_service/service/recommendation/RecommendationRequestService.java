@@ -1,5 +1,6 @@
 package school.faang.user_service.service.recommendation;
 
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,6 @@ public class RecommendationRequestService {
 
     @Transactional
     public RecommendationRequestDto create(@NotNull RecommendationRequestDto requestDto) {
-        validateMessageIsEmpty(requestDto.getMessage());
         validateRequesterReceiverNotSameUser(requestDto.getRequesterId(), requestDto.getReceiverId());
         validateUserExist(requestDto.getRequesterId());
         validateUserExist(requestDto.getReceiverId());
@@ -65,7 +65,7 @@ public class RecommendationRequestService {
         return requestMapper.toDto(requestRepository.save(request));
     }
 
-    public List<RecommendationRequestDto> getRequests(RequestFilterDto filterDto) {
+    public List<RecommendationRequestDto> getRequests(@NotNull RequestFilterDto filterDto) {
         Stream<RecommendationRequest> requestStream = requestRepository.findAll().stream();
         for (Filter<RecommendationRequest> filter : filters) {
             if (filter.isApplicable(filterDto)) {
@@ -78,13 +78,13 @@ public class RecommendationRequestService {
                 .toList();
     }
 
-    public RecommendationRequestDto getRequest(Long id) {
-        return requestMapper.toDto(findRequestInDB(id));
+    public RecommendationRequestDto getRequest(@NotNull @Min(1) Long id) {
+        return requestMapper.toDto(findRequestByID(id));
     }
 
     @Transactional
-    public RejectionDto rejectRequest(Long id, @NotNull RejectionDto rejectionDto) {
-        RecommendationRequest request = findRequestInDB(id);
+    public RejectionDto rejectRequest(@NotNull @Min(1) Long id, @NotNull RejectionDto rejectionDto) {
+        RecommendationRequest request = findRequestByID(id);
         validateRequestOnStatusPending(request);
 
         request.setRejectionReason(rejectionDto.getReason());
@@ -98,25 +98,19 @@ public class RecommendationRequestService {
         }
     }
 
-    private void validateMessageIsEmpty(@NotNull String message) {
-        if (message.isEmpty()) {
-            throw new DataValidationException("Recommendation request message cannot be empty");
-        }
-    }
-
-    private void validateRequesterReceiverNotSameUser(@NotNull Long requesterId, Long receiverId) {
+    private void validateRequesterReceiverNotSameUser(@NotNull @Min(1) Long requesterId, @NotNull @Min(1) Long receiverId) {
         if (requesterId.equals(receiverId)) {
             throw new DataValidationException("Requester and receiver cannot be the same user");
         }
     }
 
-    private void validateUserExist(Long userId) {
+    private void validateUserExist(@NotNull @Min(1) Long userId) {
         if (!userService.isUserExistInDB(userId)) {
             throw new DataValidationException("User not found in database: id=" + userId);
         }
     }
 
-    private void validateRequestPeriod(Long requesterId, Long receiverId) {
+    private void validateRequestPeriod(@NotNull @Min(1) Long requesterId, @NotNull @Min(1) Long receiverId) {
         Optional<RecommendationRequest> request = requestRepository.findLatestPendingRequest(requesterId, receiverId);
         if (request.isPresent()) {
             long durationDays = Duration.between(request.get().getCreatedAt(), LocalDateTime.now()).toDays();
@@ -126,7 +120,7 @@ public class RecommendationRequestService {
         }
     }
 
-    private void validateSkillsExist(List<Long> skillIds) {
+    private void validateSkillsExist(@NotNull List<Long> skillIds) {
         List<Long> existingSkillIds = skillService.findExistingSkills(skillIds);
         List<Long> missingSkills = skillIds.stream()
                 .filter(skillId -> !existingSkillIds.contains(skillId))
@@ -137,7 +131,7 @@ public class RecommendationRequestService {
     }
 
     @NotNull
-    private RecommendationRequest findRequestInDB(Long id) {
+    private RecommendationRequest findRequestByID(@NotNull @Min(1) Long id) {
         Optional<RecommendationRequest> requestOptional = requestRepository.findById(id);
         if (requestOptional.isPresent()) {
             return requestOptional.get();

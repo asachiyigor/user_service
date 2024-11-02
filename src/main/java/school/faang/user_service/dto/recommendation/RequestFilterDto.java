@@ -1,6 +1,9 @@
 package school.faang.user_service.dto.recommendation;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import school.faang.user_service.entity.RequestStatus;
 
 import java.time.LocalDateTime;
@@ -9,7 +12,6 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 public class RequestFilterDto {
     private String requesterName;
     private String receiverName;
