@@ -54,18 +54,18 @@ public class RecommendationRequestService {
         validateSkillsExist(requestDto.getSkillsIds());
 
         RecommendationRequest requestEntity = requestMapper.toEntity(requestDto);
-        requestEntity.setRequester(userService.getUser(requestDto.getRequesterId()));
-        requestEntity.setReceiver(userService.getUser(requestDto.getReceiverId()));
+        requestEntity.setRequester(userService.getUserById(requestDto.getRequesterId()));
+        requestEntity.setReceiver(userService.getUserById(requestDto.getReceiverId()));
         requestEntity.setStatus(PENDING);
-        RecommendationRequest requestDB = requestRepository.save(requestEntity);
-        requestDB.setSkills(new ArrayList<>());
-        List<Skill> skills = skillService.findAll(requestDto.getSkillsIds());
+        RecommendationRequest requestSaved = requestRepository.save(requestEntity);
+        requestSaved.setSkills(new ArrayList<>());
+        List<Skill> skills = skillService.findAllByIDs(requestDto.getSkillsIds());
         skills.forEach(skill -> {
-            SkillRequest skillRequest = skillRequestService.create(requestDB, skill);
-            requestDB.getSkills().add(skillRequest);
+            SkillRequest skillRequest = skillRequestService.create(requestSaved, skill);
+            requestSaved.getSkills().add(skillRequest);
         });
-        requestRepository.save(requestDB);
-        return requestMapper.toDto(requestDB);
+        requestRepository.save(requestSaved);
+        return requestMapper.toDto(requestSaved);
     }
 
     public List<RecommendationRequestDto> getRequests(@NotNull RequestFilterDto filterDto) {
@@ -104,7 +104,7 @@ public class RecommendationRequestService {
     }
 
     private void validateUserExist(@NotNull @Min(1) Long userId) {
-        if (!userService.isUserExistInDB(userId)) {
+        if (!userService.isUserExistByID(userId)) {
             throw new DataValidationException("User not found in database: id=" + userId);
         }
     }

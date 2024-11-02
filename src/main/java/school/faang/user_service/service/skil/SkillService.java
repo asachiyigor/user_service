@@ -13,7 +13,7 @@ import java.util.List;
 public class SkillService {
     private final SkillRepository skillRepository;
 
-    public List<Skill> findAll(@NotNull List<Long> ids) {
+    public List<Skill> findAllByIDs(@NotNull List<Long> ids) {
         validateIds(ids);
         return skillRepository.findAllById(ids).stream().toList();
     }

@@ -13,7 +13,7 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
 
-    public User getUser(Long id) {
+    public User getUserById(Long id) {
        Optional<User> user = findUserByIdInDB(id);
        if (user.isPresent()) {
            return user.get();
@@ -27,7 +27,7 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public boolean isUserExistInDB(Long userId) {
+    public boolean isUserExistByID(Long userId) {
         return userRepository.existsById(userId);
     }
 

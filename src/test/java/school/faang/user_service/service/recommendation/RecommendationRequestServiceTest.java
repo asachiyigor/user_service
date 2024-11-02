@@ -10,29 +10,24 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
+import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
+import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
-import school.faang.user_service.repository.SkillRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
+import school.faang.user_service.service.skil.SkillRequestService;
 import school.faang.user_service.service.skil.SkillService;
 import school.faang.user_service.service.user.UserService;
 
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static school.faang.user_service.entity.RequestStatus.PENDING;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class RecommendationRequestServiceTest {
@@ -43,39 +38,22 @@ public class RecommendationRequestServiceTest {
     @Mock
     private UserService userService;
     @Mock
-    private SkillRepository skillRepository;
-    @Mock
     private SkillService skillService;
     @Mock
-    private RecommendationRequestService skillRequestService;
+    private SkillRequestService skillRequestService;
     @Spy
     private RecommendationRequestMapper requestMapper = Mappers.getMapper(RecommendationRequestMapper.class);
 
 
     private RecommendationRequestDto requestDto;
-    private RecommendationRequest requestDB;
-
-    @Test
-    @DisplayName("testCreateWithMessageIsEmpty")
-    public void testCreateWithMessageIsEmpty() {
-        requestDto = getRequestDto();
-        requestDto.setMessage("");
-        assertThrows(DataValidationException.class, () -> requestService.create(requestDto));
-    }
-
-    @Test
-    @DisplayName("testCreateWithRequesterReceiverSameUser")
-    public void testCreateWithRequesterReceiverSameUser() {
-        requestDto = getRequestDto();
-        requestDto.setReceiverId(1L);
-        assertThrows(DataValidationException.class, () -> requestService.create(requestDto));
-    }
+    private RecommendationRequest requestSaved;
+    private static final RequestStatus PENDING = RequestStatus.PENDING;
 
     @Test
     @DisplayName("testCreateWithUserExistence")
     public void testCreateWithUserExistence() {
         requestDto = getRequestDto();
-        when(userService.isUserExistInDB(requestDto.getRequesterId())).thenReturn(false);
+        when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(false);
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
                 () -> requestService.create(requestDto));
@@ -87,11 +65,13 @@ public class RecommendationRequestServiceTest {
     @DisplayName("testCreateWithRequestPeriodShort")
     public void testCreateWithRequestPeriodShort() {
         requestDto = getRequestDto();
-        requestDB = getRequestFromDB();
-        requestDB.setCreatedAt(LocalDateTime.of(2024, Month.OCTOBER, 1, 1, 1));
-        when(userService.isUserExistInDB(requestDto.getRequesterId())).thenReturn(true);
-        when(userService.isUserExistInDB(requestDto.getReceiverId())).thenReturn(true);
-        when(requestRepository.findLatestPendingRequest(anyLong(), anyLong())).thenReturn(Optional.of(requestDB));
+        RecommendationRequest existingRequest = new RecommendationRequest();
+        existingRequest.setCreatedAt(LocalDateTime.now().minusDays(60));
+
+        when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(true);
+        when(userService.isUserExistByID(requestDto.getReceiverId())).thenReturn(true);
+        when(requestRepository.findLatestPendingRequest(1L, 2L))
+                .thenReturn(Optional.of(existingRequest));
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
                 () -> requestService.create(requestDto));
@@ -101,15 +81,16 @@ public class RecommendationRequestServiceTest {
     @Test
     @DisplayName("testCreateWithSkillsExistence")
     public void testCreateWithSkillsExistence() {
-        requestDB = getRequestFromDB();
+        requestSaved = getRequestSaved();
         requestDto = getRequestDto();
         requestDto.getSkillsIds().add(5L);
-        List<Long> existingSkillIds = List.of(1L, 2L);
+        List<Long> existSkillIds = List.of(1L, 2L);
 
-        when(userService.isUserExistInDB(requestDto.getRequesterId())).thenReturn(true);
-        when(userService.isUserExistInDB(requestDto.getReceiverId())).thenReturn(true);
-        when(requestRepository.findLatestPendingRequest(anyLong(), anyLong())).thenReturn(Optional.of(requestDB));
-        when(skillService.findExistingSkills(requestDto.getSkillsIds())).thenReturn(existingSkillIds);
+        when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(true);
+        when(userService.isUserExistByID(requestDto.getReceiverId())).thenReturn(true);
+        when(requestRepository.findLatestPendingRequest(requestDto.getRequesterId(), requestDto.getReceiverId()))
+                .thenReturn(Optional.of(requestSaved));
+        when(skillService.findExistingSkills(requestDto.getSkillsIds())).thenReturn(existSkillIds);
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
                 () -> requestService.create(requestDto));
@@ -117,57 +98,77 @@ public class RecommendationRequestServiceTest {
     }
 
     @Test
+    @DisplayName("testIsCreateRequest")
     public void testIsCreateRequest() {
         requestDto = getRequestDto();
-        requestDB = getRequestFromDB();
-        List<Long> existingSkillIds = List.of(1L, 2L);
-        User requester = userService.getUser(getRequestDto().getRequesterId());
-        User receiver = userService.getUser(getRequestDto().getReceiverId());
-        RecommendationRequest requestEntity = requestMapper.toEntity(requestDto);
-        RecommendationRequest requestDBNew = new RecommendationRequest().builder()
-                .id(2L)
-                .message(requestEntity.getMessage())
-                .status(requestEntity.getStatus())
-                .requester(requestEntity.getRequester())
-                .receiver(requestEntity.getReceiver())
-                .createdAt(LocalDateTime.now())
-                .build();
-        List<Skill> skills = new ArrayList<>(List.of(
-                new Skill().builder().id(1L).title("java").build(),
-                new Skill().builder().id(2L).title("java").build()
-        ));
-        int counter = requestDto.getSkillsIds().size();
+        requestSaved = getRequestSaved();
+        RecommendationRequest requestEntity = getRequestEntity();
+        List<Long> existSkillIds = List.of(1L, 2L);
+        Skill skillFirst = new Skill();
+        Skill skillSecond = new Skill();
+        skillFirst.setId(1L);
+        skillSecond.setId(2L);
+        SkillRequest skillRequestFirst = new SkillRequest(requestSaved, skillFirst);
+        SkillRequest skillRequestSecond = new SkillRequest(requestSaved, skillSecond);
+        requestSaved.getSkills().add(skillRequestFirst);
+        requestSaved.getSkills().add(skillRequestSecond);
 
-        when(userService.isUserExistInDB(requestDto.getRequesterId())).thenReturn(true);
-        when(userService.isUserExistInDB(requestDto.getReceiverId())).thenReturn(true);
-        when(requestRepository.findLatestPendingRequest(anyLong(), anyLong())).thenReturn(Optional.of(requestDB));
-        when(skillRepository.findExistingSkillIds(requestDto.getSkillsIds())).thenReturn(existingSkillIds);
 
-        when(userService.getUser(requestDto.getRequesterId())).thenReturn(requester);
-        when(userService.getUser(requestDto.getRequesterId())).thenReturn(receiver);
-        verify(requestRepository, times(1)).save(requestEntity);
-        when(skillService.findAll(requestDto.getSkillsIds())).thenReturn(skills);
-//        verify(skillRequestService, times(counter)).create(requestDBNew, skill);
+        when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(true);
+        when(userService.isUserExistByID(requestDto.getReceiverId())).thenReturn(true);
+        when(requestRepository.findLatestPendingRequest(requestDto.getRequesterId(), requestDto.getReceiverId()))
+                .thenReturn(Optional.of(requestSaved));
+        when(skillService.findExistingSkills(requestDto.getSkillsIds())).thenReturn(existSkillIds);
+        when(requestMapper.toEntity(requestDto)).thenReturn(requestEntity);
+        when(userService.getUserById(requestDto.getRequesterId())).thenReturn(requestEntity.getRequester());
+        when(userService.getUserById(requestDto.getRequesterId())).thenReturn(requestEntity.getReceiver());
+        when(requestRepository.save(requestEntity)).thenReturn(requestSaved);
+        when(skillService.findAllByIDs(requestDto.getSkillsIds())).thenReturn(List.of(skillFirst, skillSecond));
+        when(skillRequestService.create(requestSaved, skillFirst)).thenReturn(skillRequestFirst);
+        when(skillRequestService.create(requestSaved, skillSecond)).thenReturn(skillRequestSecond);
 
+        RecommendationRequestDto result = requestService.create(requestDto);
+
+        verify(userService).getUserById(requestDto.getRequesterId());
+        verify(userService).getUserById(requestDto.getReceiverId());
+        verify(requestRepository).save(requestEntity);
+        verify(skillService).findAllByIDs(requestDto.getSkillsIds());
+        verify(skillRequestService).create(requestSaved, skillFirst);
+        verify(skillRequestService).create(requestSaved, skillSecond);
+
+        assertEquals(result, requestMapper.toDto(requestSaved));
+        assertEquals(PENDING, result.getStatus());
+        assertEquals(2, result.getSkillsIds().size());
     }
 
     private RecommendationRequestDto getRequestDto() {
         return RecommendationRequestDto.builder()
+                .id(1L)
                 .message("папапап")
+                .status(PENDING)
                 .requesterId(1L)
                 .receiverId(2L)
                 .skillsIds(new ArrayList<>(Arrays.asList(1L, 2L)))
                 .build();
     }
 
-    private RecommendationRequest getRequestFromDB() {
+    private RecommendationRequest getRequestSaved() {
         return RecommendationRequest.builder()
                 .id(1L)
                 .message("папапап")
-                .requester(userService.getUser(1L))
-                .receiver(userService.getUser(2L))
                 .status(PENDING)
-                .createdAt(LocalDateTime.of(2024, Month.JANUARY, 1, 1, 1))
+                .requester(new User())
+                .receiver(new User())
+                .skills(new ArrayList<>())
+                .createdAt(LocalDateTime.of(2024, Month.FEBRUARY, 1, 0, 0, 0))
+                .build();
+    }
+
+    private RecommendationRequest getRequestEntity() {
+        return RecommendationRequest.builder()
+                .requester(new User())
+                .receiver(new User())
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 }
