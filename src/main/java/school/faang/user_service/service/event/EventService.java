@@ -1,6 +1,5 @@
 package school.faang.user_service.service.event;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import school.faang.user_service.dto.event.EventDto;
@@ -26,7 +25,6 @@ public class EventService {
     private final EventMapper eventMapper;
     private final UserRepository userRepository;
 
-    @Transactional
     public EventDto create(EventDto event) {
         validateUserSkills(event);
         return eventMapper.toDto(eventRepository.save(eventMapper.toEntity(event)));
