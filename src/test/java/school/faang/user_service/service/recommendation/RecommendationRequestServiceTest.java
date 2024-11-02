@@ -11,6 +11,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
 import school.faang.user_service.dto.recommendation.RejectionDto;
+import school.faang.user_service.dto.recommendation.RequestFilterDto;
 import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.User;
@@ -20,6 +21,8 @@ import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapper;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
+import school.faang.user_service.service.recommendation.filter.MessageFilter;
+import school.faang.user_service.service.recommendation.filter.StatusFilter;
 import school.faang.user_service.service.skil.SkillRequestService;
 import school.faang.user_service.service.skil.SkillService;
 import school.faang.user_service.service.user.UserService;
@@ -27,6 +30,7 @@ import school.faang.user_service.service.user.UserService;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -43,6 +47,10 @@ public class RecommendationRequestServiceTest {
     private SkillService skillService;
     @Mock
     private SkillRequestService skillRequestService;
+    @Mock
+    private Filter<RecommendationRequest> statusFilter;
+    @Mock
+    private Filter<RecommendationRequest> requesterNameFilter;
     @Spy
     private RecommendationRequestMapper requestMapper = Mappers.getMapper(RecommendationRequestMapper.class);
     @Spy
@@ -147,6 +155,30 @@ public class RecommendationRequestServiceTest {
     }
 
     @Test
+    @DisplayName("testGetRequestsWithFilerSuccess")
+    public void testGetRequestsWithFilerSuccess() {
+        requestDto = getRequestDto();
+        RequestFilterDto requestFilterDto = RequestFilterDto.builder()
+                .status(PENDING)
+                .build();
+//        List<Filter<RecommendationRequest>> filters = List.of(statusFilter, requesterNameFilter);
+        statusFilter = new StatusFilter();
+        List<RecommendationRequestDto> requestsDto = Arrays.asList(requestDto, getRequestDto());
+        requestSaved = getRequestSaved();
+        Stream<RecommendationRequest> requestStream = Stream.of(requestSaved);
+
+        when(requestRepository.findAll()).thenReturn(List.of(requestSaved));
+        when(statusFilter.isApplicable(requestFilterDto)).thenReturn(true);
+        when(statusFilter.apply(requestStream, eq(requestFilterDto))).thenReturn(Stream.of(requestSaved));
+        when(requestMapper.toDto(requestSaved)).thenReturn(requestsDto.get(0));
+
+        List<RecommendationRequestDto> resultDtos = requestService.getRequests(requestFilterDto);
+
+        assertEquals(1, resultDtos.size());
+        assertEquals(requestDto, resultDtos.get(0));
+    }
+
+    @Test
     @DisplayName("testGetRequestById")
     public void testGetRequestById() {
         requestSaved = getRequestSaved();
@@ -160,7 +192,7 @@ public class RecommendationRequestServiceTest {
 
     @Test
     @DisplayName("testRejectRequestWithStatusPending")
-    public void testRejectRequestWithStatusNotPending(){
+    public void testRejectRequestWithStatusNotPending() {
         requestSaved = getRequestSaved();
         requestSaved.setStatus(REJECTED);
         RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(REJECTED).build();
@@ -175,7 +207,7 @@ public class RecommendationRequestServiceTest {
 
     @Test
     @DisplayName("testRejectRequestSuccess")
-    public void testRejectRequestSuccess(){
+    public void testRejectRequestSuccess() {
         requestSaved = getRequestSaved();
         RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(REJECTED).build();
 
