@@ -21,3 +21,4 @@ public class TestOne {
         assertThrows(NullPointerException.class, () -> service.createInvitation(null, null, expectedGoalId, RequestStatus.PENDING));
     }
 }
+
