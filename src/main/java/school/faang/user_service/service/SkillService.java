@@ -27,13 +27,13 @@ public class SkillService {
     private final SkillOfferRepository skillOfferRepository;
     private final UserRepository userRepository;
 
-    public void validateSkill(@NotNull SkillDto skill) {
+    private void validateSkill(@NotNull SkillDto skill) {
         if (skill.getTitle().isEmpty()) {
             throw new DataValidationException("Пустое значение");
         }
     }
 
-    public void validateUser(@NotNull long userId) {
+    private void validateUser(@NotNull long userId) {
         if (!userRepository.existsById(userId)) {
             throw new DataValidationException("Пользователь с данным ID нет");
         }
@@ -56,14 +56,14 @@ public class SkillService {
         validateUser(userId);
 
         List<Skill> skillsList = skillRepository.findSkillsOfferedToUser(userId);
-        List<SkillCandidateDto> skillCandidatesDto = skillMapper.skillCandidateToDto(skillsList);
+        List<SkillCandidateDto> skillCandidateDtoList = skillMapper.skillCandidateToDto(skillsList);
 
-        for (SkillCandidateDto candidate : skillCandidatesDto) {
+        for (SkillCandidateDto candidate : skillCandidateDtoList) {
             long skillId = candidate.getSkill().getId();
             int offersAmount = skillOfferRepository.countAllOffersOfSkill(skillId, userId);
             candidate.setOffersAmount(offersAmount);
         }
-        return skillCandidatesDto;
+        return skillCandidateDtoList;
     }
 
     public List<SkillOffer> acquireSkillFromOffers(@NotNull long skillId, long userId) {
