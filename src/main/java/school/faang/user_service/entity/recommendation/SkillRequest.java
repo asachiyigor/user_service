@@ -2,7 +2,6 @@ package school.faang.user_service.entity.recommendation;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import school.faang.user_service.entity.Skill;
