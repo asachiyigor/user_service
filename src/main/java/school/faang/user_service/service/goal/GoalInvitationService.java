@@ -3,9 +3,7 @@ package school.faang.user_service.service.goal;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.mapstruct.ap.shaded.freemarker.template.utility.NullArgumentException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import school.faang.user_service.dto.goal.GoalInvitationDto;
 import school.faang.user_service.dto.goal.InvitationFilterIDto;
@@ -22,8 +20,6 @@ import school.faang.user_service.repository.goal.GoalRepository;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.zip.DataFormatException;
 
 @Service
 @Validated
@@ -35,11 +31,15 @@ public class GoalInvitationService {
     private final GoalRepository goalRepository;
     private static final int MAX_GOALS = 3;
 
-    public GoalInvitationDto createInvitation(@Min(1) Long inviterId, @Min(1) Long invitedId, @Min((1)) Long goalId, @NotNull RequestStatus status) {
+    public GoalInvitationDto createInvitation(
+            @Min(1) Long inviterId, @Min(1) Long invitedId, @Min((1)) Long goalId, @NotNull RequestStatus status) {
         GoalInvitation invitation = new GoalInvitation();
-        Goal goal = goalRepository.findById(goalId).orElseThrow(() -> new DataValidationException("Goal not found"));
-        User invitedUser = userRepository.findById(invitedId).orElseThrow(() -> new DataValidationException("User not found"));
-        User inviterUser = userRepository.findById(inviterId).orElseThrow(() -> new DataValidationException("Inviter not found"));
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new DataValidationException("Goal not found"));
+        User invitedUser = userRepository.findById(invitedId)
+                .orElseThrow(() -> new DataValidationException("User not found"));
+        User inviterUser = userRepository.findById(inviterId)
+                .orElseThrow(() -> new DataValidationException("Inviter not found"));
         if (invitation.getInviter() == invitation.getInvited()) {
             throw new DataValidationException("Users must be unequal and real");
         }
@@ -51,26 +51,22 @@ public class GoalInvitationService {
         return invitationMapper.toDto(invitation);
     }
 
-    public GoalInvitationDto acceptGoalInvitation(long id) throws DataFormatException {
-        Optional<GoalInvitation> goalInvited = goalInvitationRepository.findById(id);
-        if (goalInvited.isEmpty()) {
-            throw new DataValidationException("GoalInvitation id not found");
-        }
-
-        GoalInvitation goalInvitation = goalInvited.get();
-        User invitedUser = goalInvitation.getInvited();
+    public GoalInvitationDto acceptGoalInvitation(long id) {
+        GoalInvitation goalInvited = goalInvitationRepository.findById(id)
+                .orElseThrow(() -> new DataValidationException("Goal invitation not found"));
+        User invitedUser = goalInvited.getInvited();
         if (invitedUser.getGoals().size() >= MAX_GOALS) {
             return rejectGoalInvitation(id);
         }
-        goalRepository.findById(goalInvitation.getGoal().getId()).orElseThrow(DataFormatException::new);
-        invitedUser.getGoals().add(goalInvitation.getGoal());
-        invitedUser.getReceivedGoalInvitations().add(goalInvitation);
-        goalInvitation.setStatus(RequestStatus.ACCEPTED);
-
-
+        Goal goal = goalInvited.getGoal();
+        goal = goalRepository.findById(goal.getId())
+                .orElseThrow(() -> new DataValidationException("Goal not found"));
+        invitedUser.getGoals().add(goal);
+        invitedUser.getReceivedGoalInvitations().add(goalInvited);
+        goalInvited.setStatus(RequestStatus.ACCEPTED);
         userRepository.save(invitedUser);
-        goalInvitation = goalInvitationRepository.save(goalInvitation);
-        return invitationMapper.toDto(goalInvitation);
+        goalInvited = goalInvitationRepository.save(goalInvited);
+        return invitationMapper.toDto(goalInvited);
     }
 
     public GoalInvitationDto rejectGoalInvitation(long id) {
