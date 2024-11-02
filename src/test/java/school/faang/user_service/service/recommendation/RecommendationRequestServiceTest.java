@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
+import school.faang.user_service.dto.recommendation.RejectionDto;
 import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.User;
@@ -17,6 +18,7 @@ import school.faang.user_service.entity.recommendation.RecommendationRequest;
 import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
+import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapper;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
 import school.faang.user_service.service.skil.SkillRequestService;
 import school.faang.user_service.service.skil.SkillService;
@@ -43,11 +45,14 @@ public class RecommendationRequestServiceTest {
     private SkillRequestService skillRequestService;
     @Spy
     private RecommendationRequestMapper requestMapper = Mappers.getMapper(RecommendationRequestMapper.class);
+    @Spy
+    private RecommendationRequestRejectionMapper rejectionMapper = Mappers.getMapper(RecommendationRequestRejectionMapper.class);
 
+    private static final RequestStatus PENDING = RequestStatus.PENDING;
+    private static final RequestStatus REJECTED = RequestStatus.REJECTED;
 
     private RecommendationRequestDto requestDto;
     private RecommendationRequest requestSaved;
-    private static final RequestStatus PENDING = RequestStatus.PENDING;
 
     @Test
     @DisplayName("testCreateWithUserExistence")
@@ -151,6 +156,36 @@ public class RecommendationRequestServiceTest {
         when(requestMapper.toDto(requestSaved)).thenReturn(requestDto);
 
         assertEquals(requestDto, requestService.getRequest(1L));
+    }
+
+    @Test
+    @DisplayName("testRejectRequestWithStatusPending")
+    public void testRejectRequestWithStatusNotPending(){
+        requestSaved = getRequestSaved();
+        requestSaved.setStatus(REJECTED);
+        RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(REJECTED).build();
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.ofNullable(requestSaved));
+
+        DataValidationException dataValidationException = assertThrows(DataValidationException.class,
+                () -> requestService.rejectRequest(1L, rejectionDto));
+
+        assertTrue(dataValidationException.getMessage().contains("Request cannot be rejected"));
+    }
+
+    @Test
+    @DisplayName("testRejectRequestSuccess")
+    public void testRejectRequestSuccess(){
+        requestSaved = getRequestSaved();
+        RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(REJECTED).build();
+
+        when(requestRepository.findById(1L)).thenReturn(Optional.ofNullable(requestSaved));
+        when(requestRepository.save(requestSaved)).thenReturn(requestSaved);
+        when(rejectionMapper.toDto(requestSaved)).thenReturn(rejectionDto);
+
+        RejectionDto result = requestService.rejectRequest(1L, rejectionDto);
+
+        assertEquals(result, rejectionDto);
     }
 
 

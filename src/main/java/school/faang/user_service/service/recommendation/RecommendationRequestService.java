@@ -93,8 +93,8 @@ public class RecommendationRequestService {
 
         requestDB.setRejectionReason(rejectionDto.getReason());
         requestDB.setStatus(REJECTED);
-        RecommendationRequest newRequest = requestRepository.save(requestDB);
-        return requestRejectionMapper.toDto(newRequest);
+        RecommendationRequest requestSaved = requestRepository.save(requestDB);
+        return requestRejectionMapper.toDto(requestSaved);
     }
 
     private void validateRequestOnStatusPending(@NotNull @Valid RecommendationRequest request) {
