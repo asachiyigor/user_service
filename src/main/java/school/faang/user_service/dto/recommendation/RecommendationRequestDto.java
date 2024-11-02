@@ -1,5 +1,7 @@
 package school.faang.user_service.dto.recommendation;
 
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -16,17 +18,22 @@ import java.util.List;
 @Builder
 public class RecommendationRequestDto {
     private Long id;
-    @NotNull
-    @NotBlank
+    @NotBlank(message = "Имя не может быть пустым!")
     private String message;
     private RequestStatus status;
     private String rejectionReason;
-    @NotNull
+    @NotNull(message = "Нужно выбрать хотя бы один навык!")
     private List<Long> skillsIds;
-    @NotNull
+    @Min(value = 1, message = "Нужно выбрать хотя бы одного пользователя кому нужна рекомендация!")
     private Long requesterId;
-    @NotNull
+    @Min(value = 1, message = "Нужно выбрать хотя бы одного пользователя от кого нужна рекомендация!")
     private Long receiverId;
     private String createdAt;
     private String updatedAt;
+
+
+    @AssertTrue(message = "Запрашивающий и получатель не могут быть одним и тем же пользователем!")
+    public boolean isRequesterAndReceiverNotTheSame() {
+        return requesterId == null || !requesterId.equals(receiverId);
+    }
 }

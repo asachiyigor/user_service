@@ -1,10 +1,12 @@
 package school.faang.user_service.service.recommendation;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
 import school.faang.user_service.dto.recommendation.RejectionDto;
 import school.faang.user_service.dto.recommendation.RequestFilterDto;
@@ -30,9 +32,11 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Validated
 public class RecommendationRequestService {
     private static final int REQUESTS_PERIOD_DAYS = 180;
     private static final RequestStatus PENDING = RequestStatus.PENDING;
+    private static final RequestStatus REJECTED = RequestStatus.REJECTED;
 
     private final RecommendationRequestRepository requestRepository;
     private final RecommendationRequestMapper requestMapper;
@@ -43,8 +47,7 @@ public class RecommendationRequestService {
     private final SkillService skillService;
 
     @Transactional
-    public RecommendationRequestDto create(@NotNull RecommendationRequestDto requestDto) {
-        validateRequesterReceiverNotSameUser(requestDto.getRequesterId(), requestDto.getReceiverId());
+    public RecommendationRequestDto create(@NotNull @Valid RecommendationRequestDto requestDto) {
         validateUserExist(requestDto.getRequesterId());
         validateUserExist(requestDto.getReceiverId());
         validateRequestPeriod(requestDto.getRequesterId(), requestDto.getReceiverId());
@@ -54,15 +57,15 @@ public class RecommendationRequestService {
         requestEntity.setRequester(userService.getUser(requestDto.getRequesterId()));
         requestEntity.setReceiver(userService.getUser(requestDto.getReceiverId()));
         requestEntity.setStatus(PENDING);
-        RecommendationRequest request = requestRepository.save(requestEntity);
-        request.setSkills(new ArrayList<>());
+        RecommendationRequest requestDB = requestRepository.save(requestEntity);
+        requestDB.setSkills(new ArrayList<>());
         List<Skill> skills = skillService.findAll(requestDto.getSkillsIds());
         skills.forEach(skill -> {
-            SkillRequest skillRequest = skillRequestService.create(request, skill);
-            request.getSkills().add(skillRequest);
+            SkillRequest skillRequest = skillRequestService.create(requestDB, skill);
+            requestDB.getSkills().add(skillRequest);
         });
-
-        return requestMapper.toDto(requestRepository.save(request));
+        requestRepository.save(requestDB);
+        return requestMapper.toDto(requestDB);
     }
 
     public List<RecommendationRequestDto> getRequests(@NotNull RequestFilterDto filterDto) {
@@ -79,28 +82,24 @@ public class RecommendationRequestService {
     }
 
     public RecommendationRequestDto getRequest(@NotNull @Min(1) Long id) {
-        return requestMapper.toDto(findRequestByID(id));
+        RecommendationRequest requestDB = findRequestByID(id);
+        return requestMapper.toDto(requestDB);
     }
 
     @Transactional
-    public RejectionDto rejectRequest(@NotNull @Min(1) Long id, @NotNull RejectionDto rejectionDto) {
-        RecommendationRequest request = findRequestByID(id);
-        validateRequestOnStatusPending(request);
+    public RejectionDto rejectRequest(@NotNull @Min(1) Long id, @Valid @NotNull RejectionDto rejectionDto) {
+        RecommendationRequest requestDB = findRequestByID(id);
+        validateRequestOnStatusPending(requestDB);
 
-        request.setRejectionReason(rejectionDto.getReason());
-        request.setStatus(rejectionDto.getStatus());
-        return requestRejectionMapper.toDto(requestRepository.save(request));
+        requestDB.setRejectionReason(rejectionDto.getReason());
+        requestDB.setStatus(REJECTED);
+        RecommendationRequest newRequest = requestRepository.save(requestDB);
+        return requestRejectionMapper.toDto(newRequest);
     }
 
-    private void validateRequestOnStatusPending(@NotNull RecommendationRequest request) {
+    private void validateRequestOnStatusPending(@NotNull @Valid RecommendationRequest request) {
         if (!request.getStatus().equals(PENDING)) {
             throw new DataValidationException("Request cannot be rejected: id=" + request.getId());
-        }
-    }
-
-    private void validateRequesterReceiverNotSameUser(@NotNull @Min(1) Long requesterId, @NotNull @Min(1) Long receiverId) {
-        if (requesterId.equals(receiverId)) {
-            throw new DataValidationException("Requester and receiver cannot be the same user");
         }
     }
 
