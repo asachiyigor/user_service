@@ -129,7 +129,6 @@ public class RecommendationRequestService {
         }
     }
 
-    @NotNull
     private RecommendationRequest findRequestByID(@NotNull @Min(1) Long id) {
         Optional<RecommendationRequest> requestOptional = requestRepository.findById(id);
         if (requestOptional.isPresent()) {

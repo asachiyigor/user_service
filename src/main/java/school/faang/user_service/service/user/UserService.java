@@ -1,7 +1,6 @@
 package school.faang.user_service.service.user;
 
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.repository.UserRepository;
@@ -22,7 +21,6 @@ public class UserService {
        }
     }
 
-    @NotNull
     private Optional<User> findUserByIdInDB(Long id) {
         return userRepository.findById(id);
     }
