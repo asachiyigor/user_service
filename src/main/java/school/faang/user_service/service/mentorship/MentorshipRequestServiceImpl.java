@@ -48,30 +48,28 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   }
 
   @Override
-  public MentorshipRequestDto findById(long requestId) {
+  public MentorshipRequest findById(long requestId) {
     MentorshipRequest request = mentorshipRequestRepository.findById(requestId)
         .orElseThrow(() -> new DataValidationException("Mentorship request not found"));
-    return mentorshipRequestMapper.toDto(request);
+    return request;
   }
 
   @Override
   public MentorshipRequestDto acceptRequest(long id) {
-    MentorshipRequestDto requestDto = findById(id);
-    if (requestDto.getStatus() != RequestStatus.ACCEPTED) {
-      requestDto.setStatus(RequestStatus.ACCEPTED);
-      MentorshipRequest request = mentorshipRequestMapper.toEntity(requestDto);
+    MentorshipRequest request = findById(id);
+    if (request.getStatus() != RequestStatus.ACCEPTED) {
+      request.setStatus(RequestStatus.ACCEPTED);
       mentorshipRequestRepository.save(request);
-
       User requester = request.getRequester();
       User mentor = request.getReceiver();
-      List<User> requesterMentors = mentorshipRequestMapper.toEntity(requestDto).getRequester()
+      List<User> requesterMentors = request.getRequester()
           .getMentors();
       requesterMentors.add(mentor);
       userRepository.save(requester);
     } else {
       throw new DataValidationException("Receiver is mentor of the requester already!");
     }
-    return requestDto;
+    return mentorshipRequestMapper.toDto(request);
   }
 
   private boolean descriptionFilter(MentorshipRequestDto requestDto,
@@ -126,6 +124,8 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
 
   private boolean areUsersValid(MentorshipRequestDto mentorshipRequestDto) {
     userRepository.findById(mentorshipRequestDto.getRequesterId())
+        .orElseThrow(() -> new DataValidationException(ERROR_USERS_VALIDATION));
+    userRepository.findById(mentorshipRequestDto.getReceiverId())
         .orElseThrow(() -> new DataValidationException(ERROR_USERS_VALIDATION));
     return true;
   }

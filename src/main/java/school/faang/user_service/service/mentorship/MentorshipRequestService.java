@@ -11,7 +11,7 @@ public interface MentorshipRequestService {
 
   List<MentorshipRequestDto> getRequests(RequestFilterDto requestFilterDto);
 
-  MentorshipRequestDto findById(long requestId);
+  MentorshipRequest findById(long requestId);
 
   MentorshipRequestDto acceptRequest(long id);
 }
