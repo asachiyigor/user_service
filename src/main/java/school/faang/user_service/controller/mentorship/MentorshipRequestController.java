@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
+import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
 import school.faang.user_service.exception.mentorship.DataValidationException;
 import school.faang.user_service.service.mentorship.MentorshipRequestService;
@@ -21,21 +22,27 @@ public class MentorshipRequestController {
 
   private final MentorshipRequestService mentorshipRequestService;
 
+  @PostMapping("/reject/{id}")
+  public ResponseEntity<MentorshipRequestDto> rejectRequest(@PathVariable long id,
+      @RequestBody RejectionDto rejectionDto) {
+    return ResponseEntity.ok(mentorshipRequestService.rejectRequest(id, rejectionDto));
+  }
+
   @PostMapping("/accept/{id}")
   public ResponseEntity<MentorshipRequestDto> acceptRequest(@PathVariable long id) {
     return ResponseEntity.ok(mentorshipRequestService.acceptRequest(id));
   }
 
   @PostMapping("/add")
-  public ResponseEntity<MentorshipRequestDto> requestMentorship(@RequestBody
-      MentorshipRequestDto mentorshipRequestDto) {
+  public ResponseEntity<MentorshipRequestDto> requestMentorship(
+      @RequestBody MentorshipRequestDto mentorshipRequestDto) {
     validateMentorshipRequest(mentorshipRequestDto);
-
     return ResponseEntity.ok(mentorshipRequestService.requestMentorship(mentorshipRequestDto));
   }
 
   @GetMapping("/list")
-  public ResponseEntity<List<MentorshipRequestDto>> getRequests(@RequestBody RequestFilterDto requestFilterDto) {
+  public ResponseEntity<List<MentorshipRequestDto>> getRequests(
+      @RequestBody RequestFilterDto requestFilterDto) {
     return ResponseEntity.ok(mentorshipRequestService.getRequests(requestFilterDto));
   }
 

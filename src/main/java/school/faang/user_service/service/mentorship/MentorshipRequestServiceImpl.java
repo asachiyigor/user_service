@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
+import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
 import school.faang.user_service.entity.MentorshipRequest;
 import school.faang.user_service.entity.RequestStatus;
@@ -49,9 +50,8 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
 
   @Override
   public MentorshipRequest findById(long requestId) {
-    MentorshipRequest request = mentorshipRequestRepository.findById(requestId)
+    return mentorshipRequestRepository.findById(requestId)
         .orElseThrow(() -> new DataValidationException("Mentorship request not found"));
-    return request;
   }
 
   @Override
@@ -68,6 +68,17 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
       userRepository.save(requester);
     } else {
       throw new DataValidationException("Receiver is mentor of the requester already!");
+    }
+    return mentorshipRequestMapper.toDto(request);
+  }
+
+  @Override
+  public MentorshipRequestDto rejectRequest(long id, RejectionDto rejectionDto) {
+    MentorshipRequest request = findById(id);
+    if (request.getStatus() != RequestStatus.REJECTED) {
+      request.setStatus(RequestStatus.REJECTED);
+      request.setRejectionReason(rejectionDto.getRejectionReason());
+      mentorshipRequestRepository.save(request);
     }
     return mentorshipRequestMapper.toDto(request);
   }
