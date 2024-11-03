@@ -3,9 +3,10 @@ package school.faang.user_service.service;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import school.faang.user_service.dto.MentorshipRequestDto;
-import school.faang.user_service.mapper.MentorshipRequestMapper;
+import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
+import school.faang.user_service.mapper.mentorship.MentorshipRequestMapper;
 import school.faang.user_service.repository.mentorship.MentorshipRequestRepository;
+import school.faang.user_service.service.mentorship.MentorshipRequestServiceImpl;
 
 public class MentorshipRequestServiceTest {
 

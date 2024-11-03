@@ -1,16 +1,18 @@
-package school.faang.user_service.controller;
+package school.faang.user_service.controller.mentorship;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import school.faang.user_service.dto.MentorshipRequestDto;
-import school.faang.user_service.dto.RequestFilterDto;
-import school.faang.user_service.service.MentorshipRequestService;
+import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
+import school.faang.user_service.dto.mentorship.RequestFilterDto;
+import school.faang.user_service.exception.mentorship.DataValidationException;
+import school.faang.user_service.service.mentorship.MentorshipRequestService;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,6 +20,11 @@ import school.faang.user_service.service.MentorshipRequestService;
 public class MentorshipRequestController {
 
   private final MentorshipRequestService mentorshipRequestService;
+
+  @PostMapping("/accept/{id}")
+  public ResponseEntity<MentorshipRequestDto> acceptRequest(@PathVariable long id) {
+    return ResponseEntity.ok(mentorshipRequestService.acceptRequest(id));
+  }
 
   @PostMapping("/add")
   public ResponseEntity<MentorshipRequestDto> requestMentorship(@RequestBody
@@ -35,7 +42,7 @@ public class MentorshipRequestController {
 
   private void validateMentorshipRequest(MentorshipRequestDto mentorshipRequestDto) {
     if (mentorshipRequestDto.getDescription().isEmpty()) {
-      throw new RuntimeException("Please write why you need mentor");
+      throw new DataValidationException("Please write why you need mentor");
     }
   }
 }
