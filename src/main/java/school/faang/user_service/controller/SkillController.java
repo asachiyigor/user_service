@@ -12,7 +12,6 @@ import school.faang.user_service.service.SkillService;
 
 import java.util.List;
 
-@Component
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/skills")

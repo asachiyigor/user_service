@@ -27,18 +27,6 @@ public class SkillService {
     private final SkillOfferRepository skillOfferRepository;
     private final UserRepository userRepository;
 
-    private void validateSkill(@NotNull SkillDto skill) {
-        if (skill.getTitle().isEmpty()) {
-            throw new DataValidationException("Пустое значение");
-        }
-    }
-
-    private void validateUser(@NotNull long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new DataValidationException("Пользователь с данным ID нет");
-        }
-    }
-
     public SkillDto create(@NotNull SkillDto skill) {
         Skill skillEntity = skillMapper.toEntity(skill);
         validateSkill(skill);
@@ -81,6 +69,18 @@ public class SkillService {
             skillOffers.addAll(skillOfferRepository.findAllOffersOfSkill(skillId, userId));
         }
         return skillOffers;
+    }
+
+    private void validateSkill(@NotNull SkillDto skill) {
+        if (skill.getTitle().isEmpty()) {
+            throw new DataValidationException("Пустое значение");
+        }
+    }
+
+    private void validateUser(@NotNull long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new DataValidationException("Пользователь с данным ID нет");
+        }
     }
 }
 
