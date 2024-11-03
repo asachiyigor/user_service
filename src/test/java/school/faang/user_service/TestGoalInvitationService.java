@@ -1,6 +1,5 @@
 package school.faang.user_service;
 
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +24,7 @@ import school.faang.user_service.service.goal.GoalInvitationService;
 import school.faang.user_service.entity.RequestStatus;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-@RequiredArgsConstructor
 @ExtendWith(MockitoExtension.class)
 class TestGoalInvitationService {
 
@@ -91,7 +90,7 @@ class TestGoalInvitationService {
     @DisplayName("Positive test method acceptGoalInvitation")
     void testPositiveAcceptInvitation() {
         GoalInvitation goalInvitation = createGoalInvitation(1L, 2L, 1L, RequestStatus.ACCEPTED);
-        goalInvitation.getInvited().setGoals(List.of(getGoal(1L)));
+        goalInvitation.getInvited().setGoals(Arrays.asList(getGoal(1L)));
         goalInvitation.setId(1L);
         UserGoal userGoal = getUserGoal();
         when(goalInvitationRepository.findById(1L)).thenReturn(Optional.of(goalInvitation));
