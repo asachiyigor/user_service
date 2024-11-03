@@ -11,11 +11,13 @@ import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.goal.Goal;
 import school.faang.user_service.entity.goal.GoalInvitation;
+import school.faang.user_service.entity.goal.UserGoal;
 import school.faang.user_service.exeption.DataValidationException;
-import school.faang.user_service.mapper.GoalInvitationMapper;
+import school.faang.user_service.mapper.invitation.GoalInvitationMapper;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.goal.GoalInvitationRepository;
 import school.faang.user_service.repository.goal.GoalRepository;
+import school.faang.user_service.repository.goal.UserGoalRepository;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +31,7 @@ public class GoalInvitationService {
     private final GoalInvitationRepository goalInvitationRepository;
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
+    private final UserGoalRepository userGoalRepository;
     private static final int MAX_GOALS = 3;
 
     public GoalInvitationDto createInvitation(
@@ -40,7 +43,7 @@ public class GoalInvitationService {
                 .orElseThrow(() -> new DataValidationException("User not found"));
         User inviterUser = userRepository.findById(inviterId)
                 .orElseThrow(() -> new DataValidationException("Inviter not found"));
-        if (invitation.getInviter() == invitation.getInvited()) {
+        if (Objects.equals(invitedUser, inviterUser)) {
             throw new DataValidationException("Users must be unequal and real");
         }
         invitation.setInvited(invitedUser);
@@ -51,7 +54,7 @@ public class GoalInvitationService {
         return invitationMapper.toDto(invitation);
     }
 
-    public GoalInvitationDto acceptGoalInvitation(long id) {
+    public GoalInvitationDto acceptGoalInvitation(Long id) {
         GoalInvitation goalInvited = goalInvitationRepository.findById(id)
                 .orElseThrow(() -> new DataValidationException("Goal invitation not found"));
         User invitedUser = goalInvited.getInvited();
@@ -61,7 +64,10 @@ public class GoalInvitationService {
         Goal goal = goalInvited.getGoal();
         goal = goalRepository.findById(goal.getId())
                 .orElseThrow(() -> new DataValidationException("Goal not found"));
-        invitedUser.getGoals().add(goal);
+        UserGoal userGoal = new UserGoal();
+        userGoal.setGoal(goal);
+        userGoal.setUser(invitedUser);
+        userGoalRepository.save(userGoal);
         invitedUser.getReceivedGoalInvitations().add(goalInvited);
         goalInvited.setStatus(RequestStatus.ACCEPTED);
         userRepository.save(invitedUser);
@@ -69,19 +75,19 @@ public class GoalInvitationService {
         return invitationMapper.toDto(goalInvited);
     }
 
-    public GoalInvitationDto rejectGoalInvitation(long id) {
+    public GoalInvitationDto rejectGoalInvitation(Long id) {
         Optional<GoalInvitation> goalInvitationOptional = goalInvitationRepository.findById(id);
         if (goalInvitationOptional.isPresent()) {
             GoalInvitation goalInvitation = goalInvitationOptional.get();
-            Optional<Goal> goal = goalRepository.findById(goalInvitation.getGoal().getId());
-            if (goal.isEmpty()) {
-                return invitationMapper.toDto(null);
+            if (goalRepository.existsById(goalInvitation.getGoal().getId())){
+                return invitationMapper.toDto(goalInvitation);
             }
             goalInvitation.setStatus(RequestStatus.REJECTED);
             goalInvitation = goalInvitationRepository.save(goalInvitation);
             return invitationMapper.toDto(goalInvitation);
         }
-        return invitationMapper.toDto(null);
+        GoalInvitation goalInvitationFalse = goalInvitationOptional.get();
+        return invitationMapper.toDto(goalInvitationFalse);
     }
 
     public List<Long> getInvitations(InvitationFilterIDto filterDto) {
@@ -100,16 +106,6 @@ public class GoalInvitationService {
                 && filterByStatus(goalInvitations, filterDto);
     }
 
-    private boolean filterByInviter(GoalInvitation goalInvitation, InvitationFilterIDto filterDto) {
-        return filterDto.getInviterId() == null
-                || Objects.equals(filterDto.getInviterId(), goalInvitation.getInviter().getId());
-    }
-
-    private boolean filterByInvited(GoalInvitation goalInvitation, InvitationFilterIDto filterDto) {
-        return filterDto.getInvitedId() == null
-                || Objects.equals(filterDto.getInvitedId(), goalInvitation.getInvited().getId());
-    }
-
     private boolean filterByNameInvited(GoalInvitation goalInvitation, InvitationFilterIDto filterDto) {
         return filterDto.getInvitedNamePattern() == null
                 || Objects.equals(filterDto.getInvitedNamePattern(), goalInvitation.getInvited().getUsername());
@@ -118,6 +114,16 @@ public class GoalInvitationService {
     private boolean filterByNameInviter(GoalInvitation goalInvitation, InvitationFilterIDto filterDto) {
         return filterDto.getInviterNamePattern() == null
                 || Objects.equals(filterDto.getInviterNamePattern(), goalInvitation.getInviter().getUsername());
+    }
+
+    private boolean filterByInviter(GoalInvitation goalInvitation, InvitationFilterIDto filterDto) {
+        return filterDto.getInviterId() == null
+                || Objects.equals(filterDto.getInviterId(), goalInvitation.getInviter().getId());
+    }
+
+    private boolean filterByInvited(GoalInvitation goalInvitation, InvitationFilterIDto filterDto) {
+        return filterDto.getInvitedId() == null
+                || Objects.equals(filterDto.getInvitedId(), goalInvitation.getInvited().getId());
     }
 
     private boolean filterByStatus(GoalInvitation goalInvitation, InvitationFilterIDto filterDto) {

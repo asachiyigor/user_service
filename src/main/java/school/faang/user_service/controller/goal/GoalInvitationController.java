@@ -16,7 +16,6 @@ import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.service.goal.GoalInvitationService;
 
 import java.util.List;
-import java.util.zip.DataFormatException;
 
 @Validated
 @RestController
@@ -35,7 +34,7 @@ public class GoalInvitationController {
     }
 
     @PostMapping("/accept/{id}")
-    public GoalInvitationDto acceptGoalInvitation(@PathVariable("id") @Min(1) Long id) throws DataFormatException {
+    public GoalInvitationDto acceptGoalInvitation(@PathVariable("id") @Min(1) Long id) {
         return goalInvitationService.acceptGoalInvitation(id);
     }
 
