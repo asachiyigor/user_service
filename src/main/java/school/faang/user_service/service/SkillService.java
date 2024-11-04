@@ -75,6 +75,10 @@ public class SkillService {
         if (skill.getTitle().isEmpty()) {
             throw new DataValidationException("Пустое значение");
         }
+
+        if (skillRepository.existsByTitle(skill.getTitle())) {
+            throw new DataValidationException(skill.getTitle() + " это значеник уже имеется");
+        }
     }
 
     private void validateUser(@NotNull long userId) {
