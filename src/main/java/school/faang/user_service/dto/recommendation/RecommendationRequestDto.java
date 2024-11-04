@@ -1,9 +1,6 @@
 package school.faang.user_service.dto.recommendation;
 
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +15,7 @@ import java.util.List;
 @Builder
 public class RecommendationRequestDto {
     private Long id;
+    @Size(min = 1, max = 4096, message = "Сообщение должно быть от 1 до 4096 символов!")
     @NotBlank(message = "Имя не может быть пустым!")
     private String message;
     private RequestStatus status;
