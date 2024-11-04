@@ -14,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 @ControllerAdvice
-public class ErrorHandlingControllerAdvice {
+public class GlobalExceptionHandler {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)

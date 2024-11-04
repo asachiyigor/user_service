@@ -53,16 +53,12 @@ public class RecommendationRequestServiceTest {
     @Spy
     private RecommendationRequestRejectionMapper rejectionMapper = Mappers.getMapper(RecommendationRequestRejectionMapper.class);
 
-    private static final RequestStatus PENDING = RequestStatus.PENDING;
-    private static final RequestStatus REJECTED = RequestStatus.REJECTED;
 
-    private RecommendationRequestDto requestDto;
-    private RecommendationRequest requestSaved;
 
     @Test
     @DisplayName("testCreateWithUserExistence")
     public void testCreateWithUserExistence() {
-        requestDto = getRequestDto();
+        RecommendationRequestDto requestDto = getRequestDto();
         when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(false);
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
@@ -74,7 +70,7 @@ public class RecommendationRequestServiceTest {
     @Test
     @DisplayName("testCreateWithRequestPeriodShort")
     public void testCreateWithRequestPeriodShort() {
-        requestDto = getRequestDto();
+        RecommendationRequestDto requestDto = getRequestDto();
         RecommendationRequest existingRequest = new RecommendationRequest();
         existingRequest.setCreatedAt(LocalDateTime.now().minusDays(60));
 
@@ -92,8 +88,8 @@ public class RecommendationRequestServiceTest {
     @Test
     @DisplayName("testCreateWithSkillsExistence")
     public void testCreateWithSkillsExistence() {
-        requestSaved = getRequestSaved();
-        requestDto = getRequestDto();
+        RecommendationRequest requestSaved = getRequestSaved();
+        RecommendationRequestDto requestDto = getRequestDto();
         requestDto.getSkillsIds().add(5L);
         List<Long> existSkillIds = List.of(1L, 2L);
 
@@ -112,8 +108,8 @@ public class RecommendationRequestServiceTest {
     @Test
     @DisplayName("testIsCreateRequest")
     public void testIsCreateRequest() {
-        requestDto = getRequestDto();
-        requestSaved = getRequestSaved();
+        RecommendationRequestDto requestDto = getRequestDto();
+        RecommendationRequest requestSaved = getRequestSaved();
         RecommendationRequest requestEntity = getRequestEntity();
         List<Long> existSkillIds = List.of(1L, 2L);
         Skill skillFirst = new Skill();
@@ -148,20 +144,20 @@ public class RecommendationRequestServiceTest {
         verify(skillRequestService).create(requestSaved, skillSecond);
 
         assertEquals(result, requestMapper.toDto(requestSaved));
-        assertEquals(PENDING, result.getStatus());
+        assertEquals(RequestStatus.PENDING, result.getStatus());
         assertEquals(2, result.getSkillsIds().size());
     }
 
     @Test
     @DisplayName("testGetRequestsWithFilerSuccess")
     public void testGetRequestsWithFilerSuccess() {
-        requestDto = getRequestDto();
+        RecommendationRequestDto requestDto = getRequestDto();
         RequestFilterDto requestFilterDto = RequestFilterDto.builder()
-                .status(PENDING)
+                .status(RequestStatus.PENDING)
                 .build();
         statusFilter = new StatusFilter();
         List<RecommendationRequestDto> requestsDto = Arrays.asList(requestDto, getRequestDto());
-        requestSaved = getRequestSaved();
+        RecommendationRequest requestSaved = getRequestSaved();
         Stream<RecommendationRequest> requestStream = Stream.of(requestSaved);
 
         when(requestRepository.findAll()).thenReturn(List.of(requestSaved));
@@ -178,8 +174,8 @@ public class RecommendationRequestServiceTest {
     @Test
     @DisplayName("testGetRequestById")
     public void testGetRequestById() {
-        requestSaved = getRequestSaved();
-        requestDto = getRequestDto();
+        RecommendationRequest requestSaved = getRequestSaved();
+        RecommendationRequestDto requestDto = getRequestDto();
 
         when(requestRepository.findById(1L)).thenReturn(Optional.ofNullable(requestSaved));
         when(requestMapper.toDto(requestSaved)).thenReturn(requestDto);
@@ -190,9 +186,9 @@ public class RecommendationRequestServiceTest {
     @Test
     @DisplayName("testRejectRequestWithStatusPending")
     public void testRejectRequestWithStatusNotPending() {
-        requestSaved = getRequestSaved();
-        requestSaved.setStatus(REJECTED);
-        RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(REJECTED).build();
+        RecommendationRequest requestSaved = getRequestSaved();
+        requestSaved.setStatus(RequestStatus.REJECTED);
+        RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(RequestStatus.REJECTED).build();
 
         when(requestRepository.findById(1L)).thenReturn(Optional.ofNullable(requestSaved));
 
@@ -205,8 +201,8 @@ public class RecommendationRequestServiceTest {
     @Test
     @DisplayName("testRejectRequestSuccess")
     public void testRejectRequestSuccess() {
-        requestSaved = getRequestSaved();
-        RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(REJECTED).build();
+        RecommendationRequest requestSaved = getRequestSaved();
+        RejectionDto rejectionDto = RejectionDto.builder().reason("reason").status(RequestStatus.REJECTED).build();
 
         when(requestRepository.findById(1L)).thenReturn(Optional.ofNullable(requestSaved));
         when(requestRepository.save(requestSaved)).thenReturn(requestSaved);
@@ -221,7 +217,7 @@ public class RecommendationRequestServiceTest {
         return RecommendationRequestDto.builder()
                 .id(1L)
                 .message("папапап")
-                .status(PENDING)
+                .status(RequestStatus.PENDING)
                 .requesterId(1L)
                 .receiverId(2L)
                 .skillsIds(new ArrayList<>(Arrays.asList(1L, 2L)))
@@ -232,7 +228,7 @@ public class RecommendationRequestServiceTest {
         return RecommendationRequest.builder()
                 .id(1L)
                 .message("папапап")
-                .status(PENDING)
+                .status(RequestStatus.PENDING)
                 .requester(new User())
                 .receiver(new User())
                 .skills(new ArrayList<>())
