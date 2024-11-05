@@ -1,9 +1,10 @@
-package school.faang.user_service.service;
+package school.faang.user_service.service.recommendation;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.dto.recommendation.RecommendationDto;
 import school.faang.user_service.dto.recommendation.SkillOfferDto;
@@ -25,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class RecommendationService {
 
@@ -66,11 +67,11 @@ public class RecommendationService {
 
     @Transactional
     public RecommendationDto updateRecommendation(Long recommendationId, RecommendationDto recommendationDto) {
+        validateRecommendationIdExists(recommendationId);
+
         Long receiverId = recommendationDto.getReceiverId();
         Long authorId = recommendationDto.getAuthorId();
         Optional<List<SkillOfferDto>> skillOffersNew = Optional.ofNullable(recommendationDto.getSkillOffers());
-
-        validateRecommendationIdExists(recommendationId);
         validateUserIdExists(authorId);
         validateUserIdExists(receiverId);
         skillOffersNew.ifPresent(offers -> {
@@ -80,7 +81,7 @@ public class RecommendationService {
 
         skillOfferRepository.deleteAllByRecommendationId(recommendationId);
         skillOffersNew.ifPresent(offers -> saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId));
-        recommendationRepository.update(authorId, receiverId, recommendationDto.getContent());
+        recommendationRepository.update(recommendationId, authorId, receiverId, recommendationDto.getContent());
         Recommendation savedRecommendation = getRecommendationIfExists(recommendationId);
         return recommendationMapper.toDto(savedRecommendation);
     }
@@ -164,5 +165,4 @@ public class RecommendationService {
             throw new DataValidationException("User with specified ID does not exist. Id: " + userId);
         }
     }
-
 }

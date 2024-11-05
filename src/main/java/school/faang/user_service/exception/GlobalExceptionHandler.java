@@ -55,7 +55,6 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({DataValidationException.class,
             InvalidFormatException.class,
-//            IllegalArgumentException.class,
             DataIntegrityViolationException.class,
             org.springframework.http.converter.HttpMessageNotReadableException.class})
     public ResponseEntity<ErrorResponse> handleExceptions(Exception ex, HttpServletRequest request) {

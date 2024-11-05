@@ -1,12 +1,11 @@
 package school.faang.user_service.controller.recommendation;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,16 +15,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import school.faang.user_service.dto.recommendation.RecommendationDto;
-import school.faang.user_service.service.RecommendationService;
+import school.faang.user_service.service.recommendation.RecommendationService;
 
 import java.util.List;
 
-@Component
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/recommendations")
 public class RecommendationController {
-    @Autowired
-    private RecommendationService recommendationService;
+    private final RecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<List<RecommendationDto>> getAllRecommendations() {
@@ -44,7 +42,7 @@ public class RecommendationController {
         return recommendationService.getAllGivenRecommendations(authorId, pageable);
     }
 
-    @GetMapping("/reciever/{receiverId}")
+    @GetMapping("/receiver/{receiverId}")
     public Page<RecommendationDto> getAllUserRecommendations(@PathVariable Long receiverId, Pageable pageable) {
         return recommendationService.getAllUserRecommendations(receiverId, pageable);
     }
