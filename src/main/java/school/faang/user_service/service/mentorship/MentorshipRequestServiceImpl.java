@@ -19,14 +19,17 @@ import school.faang.user_service.repository.mentorship.MentorshipRequestReposito
 @RequiredArgsConstructor
 public class MentorshipRequestServiceImpl implements MentorshipRequestService {
 
-  private static final int VALID_MONTHS = 3;
-  private static final String ERROR_USERS_VALIDATION = "Not allowed, requester and receiver must be registered in Mentorship Request Database";
-  private static final String ERROR_REQUEST_OLD = "Not allowed more than one request per valid period";
-  private static final String ERROR_SELF_REQUEST = "Not allowed to send request to self";
   private final MentorshipRequestRepository mentorshipRequestRepository;
   private final MentorshipRequestMapper mentorshipRequestMapper;
   private final UserRepository userRepository;
 
+  public static final int VALID_MONTHS = 3;
+  public static final String ERROR_REQUESTER_IS_MISSING = "Requester in missing in DB";
+  public static final String ERROR_RECEIVER_IS_MISSING = "Receiver is missing in DB";
+  public static final String ERROR_EARLY_REQUEST = "Not allowed more than one request per valid period";
+  public static final String ERROR_SELF_REQUEST = "Not allowed to send self-request";
+
+  @Override
   public MentorshipRequestDto requestMentorship(MentorshipRequestDto mentorshipRequestDto) {
     validateMentorshipRequest(mentorshipRequestDto);
 
@@ -51,7 +54,8 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   @Override
   public MentorshipRequest findById(long requestId) {
     return mentorshipRequestRepository.findById(requestId)
-        .orElseThrow(() -> new DataValidationException("Mentorship request not found"));
+        .orElseThrow(
+            () -> new DataValidationException("Mentorship request id=" + requestId + " not found"));
   }
 
   @Override
@@ -108,37 +112,33 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   }
 
   private void validateMentorshipRequest(MentorshipRequestDto mentorshipRequestDto) {
-    if (!areUsersValid(mentorshipRequestDto)) {
-      throw new DataValidationException(ERROR_USERS_VALIDATION);
-    }
+    validateExistUsers(mentorshipRequestDto);
+    validateTimePeriod(mentorshipRequestDto);
+    validateNotSelfRequest(mentorshipRequestDto);
+  }
 
-    if (isRequestEarlierThanValidMonths(mentorshipRequestDto)) {
-      throw new DataValidationException(ERROR_REQUEST_OLD);
-    }
-
-    if (!isNotSelfRequest(mentorshipRequestDto)) {
+  private void validateNotSelfRequest(MentorshipRequestDto mentorshipRequestDto) {
+    if (mentorshipRequestDto.getRequesterId().equals(mentorshipRequestDto.getReceiverId())) {
       throw new DataValidationException(ERROR_SELF_REQUEST);
     }
   }
 
-  private boolean isNotSelfRequest(MentorshipRequestDto mentorshipRequestDto) {
-    return !mentorshipRequestDto.getRequesterId().equals(mentorshipRequestDto.getReceiverId());
-  }
-
-  private boolean isRequestEarlierThanValidMonths(MentorshipRequestDto mentorshipRequestDto) {
+  private void validateTimePeriod(MentorshipRequestDto mentorshipRequestDto) {
     LocalDateTime thresholdDate = LocalDateTime.now().minusMonths(VALID_MONTHS);
-    return mentorshipRequestRepository.findLatestRequest(mentorshipRequestDto.getRequesterId(),
+    mentorshipRequestRepository.findLatestRequest(mentorshipRequestDto.getRequesterId(),
             mentorshipRequestDto.getReceiverId())
-        .filter(mentorshipRequest -> mentorshipRequest.getCreatedAt().isAfter(thresholdDate))
-        .isPresent();
+        .ifPresent(mentorshipRequest -> {
+          if (mentorshipRequest.getCreatedAt().isAfter(thresholdDate)) {
+            throw new DataValidationException(ERROR_EARLY_REQUEST);
+          }
+        });
   }
 
-  private boolean areUsersValid(MentorshipRequestDto mentorshipRequestDto) {
+  private void validateExistUsers(MentorshipRequestDto mentorshipRequestDto) {
     userRepository.findById(mentorshipRequestDto.getRequesterId())
-        .orElseThrow(() -> new DataValidationException(ERROR_USERS_VALIDATION));
+        .orElseThrow(() -> new DataValidationException(ERROR_REQUESTER_IS_MISSING));
     userRepository.findById(mentorshipRequestDto.getReceiverId())
-        .orElseThrow(() -> new DataValidationException(ERROR_USERS_VALIDATION));
-    return true;
+        .orElseThrow(() -> new DataValidationException(ERROR_RECEIVER_IS_MISSING));
   }
 
 }
