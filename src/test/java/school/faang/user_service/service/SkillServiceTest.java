@@ -167,7 +167,7 @@ public class SkillServiceTest {
         long skillId = 1L;
         long userId = 100L;
         Skill skill = Skill.builder().id(skillId).title("Java").build();
-
+        when(userRepository.existsById(userId)).thenReturn(true);
         when(skillRepository.existsById(skillId)).thenReturn(true);
         when(skillRepository.findAllByUserId(userId)).thenReturn(Collections.singletonList(skill));
         when(skillRepository.findUserSkill(skillId, userId)).thenReturn(Optional.of(skill));
@@ -187,6 +187,7 @@ public class SkillServiceTest {
         SkillOffer skillOffer2 = new SkillOffer();
         List<SkillOffer> expectedOffers = Arrays.asList(skillOffer1, skillOffer2);
 
+        when(userRepository.existsById(userId)).thenReturn(true);
         when(skillRepository.existsById(skillId)).thenReturn(true);
         when(skillRepository.findAllByUserId(userId)).thenReturn(Collections.emptyList());
         when(skillRepository.findUserSkill(skillId, userId)).thenReturn(Optional.empty());
