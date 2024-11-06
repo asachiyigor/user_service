@@ -143,13 +143,13 @@ public class SkillServiceTest {
 
         List<SkillCandidateDto> result = skillService.getOfferedSkills(userId);
 
-        assertEquals(5, result.get(0).getOffersAmount());
-        assertEquals(3, result.get(1).getOffersAmount());
-
         verify(skillRepository).findSkillsOfferedToUser(userId);
         verify(skillMapper, times(2)).skillCandidateToDto(skillsList);
         verify(skillOfferRepository).countAllOffersOfSkill(1L, userId);
         verify(skillOfferRepository).countAllOffersOfSkill(2L, userId);
+
+        assertEquals(5, result.get(0).getOffersAmount());
+        assertEquals(3, result.get(1).getOffersAmount());
     }
 
     @Test
