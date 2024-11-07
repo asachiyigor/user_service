@@ -129,7 +129,6 @@ public class RecommendationService {
         }
     }
 
-
     private void validateRecommendationIdExists(Long recommendationId) {
         if (!recommendationRepository.existsById(recommendationId))
             throw new DataValidationException("Recommendation not found with id: " + recommendationId);

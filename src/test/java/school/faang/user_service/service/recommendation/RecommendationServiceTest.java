@@ -1,5 +1,6 @@
 package school.faang.user_service.service.recommendation;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,20 +15,22 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import school.faang.user_service.dto.recommendation.RecommendationDto;
 import school.faang.user_service.dto.recommendation.SkillOfferDto;
+import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.recommendation.Recommendation;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommendation.RecommendationMapperImpl;
 import school.faang.user_service.repository.SkillRepository;
 import school.faang.user_service.repository.UserRepository;
+import school.faang.user_service.repository.UserSkillGuaranteeRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRepository;
 import school.faang.user_service.repository.recommendation.SkillOfferRepository;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.anyLong;
@@ -44,6 +47,8 @@ public class RecommendationServiceTest {
     private SkillOfferRepository skillOfferRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private UserSkillGuaranteeRepository userSkillGuaranteeRepository;
     @Mock
     private SkillRepository skillRepository;
     @Spy
@@ -84,10 +89,10 @@ public class RecommendationServiceTest {
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
         assertNotNull(result);
-        assertEquals(recommendationId, result.getId());
-        assertEquals(authorId, result.getAuthorId());
-        assertEquals(receiverId, result.getReceiverId());
-        assertEquals(recommendationContent, result.getContent());
+        Assertions.assertEquals(recommendationId, result.getId());
+        Assertions.assertEquals(authorId, result.getAuthorId());
+        Assertions.assertEquals(receiverId, result.getReceiverId());
+        Assertions.assertEquals(recommendationContent, result.getContent());
         verify(userRepository, times(2)).existsById(anyLong());
         verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
     }
@@ -104,42 +109,164 @@ public class RecommendationServiceTest {
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
         assertNotNull(result);
-        assertEquals(recommendationId, result.getId());
-        assertEquals(authorId, result.getAuthorId());
-        assertEquals(receiverId, result.getReceiverId());
-        assertEquals(recommendationDto.getContent(), result.getContent());
-        List<SkillOfferDto> skillOffers = Arrays.asList(new SkillOfferDto(1L));
-        assertEquals(recommendationDto.getSkillOffers(), skillOffers);
+        Assertions.assertEquals(recommendationId, result.getId());
+        Assertions.assertEquals(authorId, result.getAuthorId());
+        Assertions.assertEquals(receiverId, result.getReceiverId());
+        Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
+        List<SkillOfferDto> skillOffers = Collections.singletonList(new SkillOfferDto(1L));
+        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
+
         verify(recommendationRepository).create(authorId, receiverId, recommendationDto.getContent());
         verify(skillRepository).existsById(anyLong());
+        verify(skillOfferRepository).create(anyLong(), anyLong());
         verify(userRepository, times(2)).existsById(anyLong());
     }
 
     @Test
-    @DisplayName("Test create recommendation - user not found")
+    @DisplayName("Test create recommendation - Guarantee added - success")
+    void testCreateRecommendationWithGuaranteeSuccess() {
+        when(userRepository.existsById(authorId)).thenReturn(true);
+        when(userRepository.existsById(receiverId)).thenReturn(true);
+        when(skillRepository.existsById(skillId)).thenReturn(true);
+        when(recommendationRepository.create(authorId, receiverId, recommendationDto.getContent())).thenReturn(1L);
+        when(skillRepository.findUserSkill(skillId, receiverId)).thenReturn(Optional.of(new Skill()));
+        when(userSkillGuaranteeRepository.existsGuarantorForUserAndSkill(receiverId, skillId, authorId)).thenReturn(false);
+        recommendationDto.setSkillOffers(Collections.singletonList(new SkillOfferDto(1L)));
+
+        RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
+
+        assertNotNull(result);
+        Assertions.assertEquals(recommendationId, result.getId());
+        Assertions.assertEquals(authorId, result.getAuthorId());
+        Assertions.assertEquals(receiverId, result.getReceiverId());
+        Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
+        List<SkillOfferDto> skillOffers = Collections.singletonList(new SkillOfferDto(1L));
+        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
+
+        verify(recommendationRepository).create(authorId, receiverId, recommendationDto.getContent());
+        verify(skillRepository).existsById(anyLong());
+        verify(skillOfferRepository).create(anyLong(), anyLong());
+        verify(userRepository, times(2)).existsById(anyLong());
+        verify(userSkillGuaranteeRepository).addSkillGuarantee(receiverId, skillId, authorId);
+    }
+
+    @Test
+    @DisplayName("Test create recommendation - Creation Date is older than 6 months - success")
+    void testCreateRecommendationCreationDateLessThan6Months() {
+        when(userRepository.existsById(authorId)).thenReturn(true);
+        when(userRepository.existsById(receiverId)).thenReturn(true);
+        when(recommendationRepository.create(authorId, receiverId, recommendationContent)).thenReturn(recommendationId);
+        Recommendation recentRecommendation = new Recommendation();
+        recentRecommendation.setCreatedAt(LocalDateTime.now().minusMonths(7));
+        when(recommendationRepository.findFirstByAuthorIdAndReceiverIdOrderByCreatedAtDesc(authorId, receiverId))
+                .thenReturn(Optional.of(recentRecommendation));
+
+        RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
+
+        assertNotNull(result);
+        Assertions.assertEquals(recommendationId, result.getId());
+        Assertions.assertEquals(authorId, result.getAuthorId());
+        Assertions.assertEquals(receiverId, result.getReceiverId());
+        Assertions.assertEquals(recommendationContent, result.getContent());
+        verify(userRepository, times(2)).existsById(anyLong());
+        verify(userRepository, times(2)).existsById(anyLong());
+        verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
+    }
+
+    @Test
+    @DisplayName("Test create recommendation - user not found - negative")
     void testValidateRecommendationUserNotFound() {
         when(userRepository.existsById(authorId)).thenReturn(false);
         assertThrows(DataValidationException.class, () -> recommendationService.createRecommendation(recommendationDto));
     }
 
     @Test
-    @DisplayName("Test update recommendation - success")
+    @DisplayName("Test validate unique skills - throws exception on duplicate skills - negative")
+    void testValidateSkillsAreUniqueThrowsException() {
+        when(userRepository.existsById(receiverId)).thenReturn(true);
+        when(userRepository.existsById(authorId)).thenReturn(true);
+        recommendationDto.setSkillOffers(List.of(new SkillOfferDto(1L), new SkillOfferDto(1L)));
+
+        DataValidationException dataValidationException = assertThrows(DataValidationException.class, () -> recommendationService.createRecommendation(recommendationDto));
+        Assertions.assertEquals("Skill Offer list has duplicate skills", dataValidationException.getMessage());
+    }
+
+    @Test
+    @DisplayName("Test create recommendation - skill id not found - negative")
+    void testValidateSkillIdNotFound() {
+        when(userRepository.existsById(anyLong())).thenReturn(true);
+        when(userRepository.existsById(anyLong())).thenReturn(true);
+        when(skillRepository.existsById(anyLong())).thenReturn(false);
+        recommendationDto.setSkillOffers(List.of(new SkillOfferDto(2L)));
+
+        DataValidationException dataValidationException = assertThrows(DataValidationException.class,
+                () -> recommendationService.createRecommendation(recommendationDto));
+        Assertions.assertEquals("Skill ID does not exist: 2", dataValidationException.getMessage());
+    }
+
+    @Test
+    @DisplayName("Test create recommendation - creation date is in last 6 months - negative")
+    void testCreateRecommendationDateAfter6Months() {
+        when(userRepository.existsById(anyLong())).thenReturn(true);
+        when(userRepository.existsById(anyLong())).thenReturn(true);
+        Recommendation recentRecommendation = new Recommendation();
+        recentRecommendation.setCreatedAt(LocalDateTime.now().minusMonths(6));
+        when(recommendationRepository.findFirstByAuthorIdAndReceiverIdOrderByCreatedAtDesc(authorId, receiverId))
+                .thenReturn(Optional.of(recentRecommendation));
+
+        DataValidationException dataValidationException = assertThrows(DataValidationException.class,
+                () -> recommendationService.createRecommendation(recommendationDto));
+        Assertions.assertEquals("Recommendation already exists within the last 6 months.", dataValidationException.getMessage());
+    }
+
+    @Test
+    @DisplayName("Test update recommendation - Skill list not empty - success")
     void testUpdateRecommendationSuccess() {
         when(recommendationRepository.existsById(1L)).thenReturn(true);
         when(userRepository.existsById(authorId)).thenReturn(true);
         when(userRepository.existsById(receiverId)).thenReturn(true);
         when(skillRepository.existsById(anyLong())).thenReturn(true);
         recommendationDto.setContent("Updated content");
-        recommendationDto.setSkillOffers(Collections.singletonList(new SkillOfferDto(2L)));
+        recommendationDto.setSkillOffers(List.of(new SkillOfferDto(1L), new SkillOfferDto(2L)));
 
         RecommendationDto result = recommendationService.updateRecommendation(1L, recommendationDto);
 
-        assertEquals("Updated content", result.getContent());
-        List<SkillOfferDto> skillOffers = Arrays.asList(new SkillOfferDto(2L));
-        assertEquals(recommendationDto.getSkillOffers(), skillOffers);
+        Assertions.assertEquals("Updated content", result.getContent());
+        List<SkillOfferDto> skillOffers = Arrays.asList(new SkillOfferDto(1L), new SkillOfferDto(2L));
+        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
         verify(recommendationRepository).update(1L, authorId, receiverId, "Updated content");
         verify(skillOfferRepository).deleteAllByRecommendationId(1L);
+        verify(skillRepository, times(2)).existsById(anyLong());
+        verify(skillOfferRepository, times(2)).create(anyLong(), anyLong());
+        verify(userRepository, times(2)).existsById(anyLong());
     }
+
+    @Test
+    @DisplayName("Test update recommendation - Skill list empty - success")
+    void testUpdateRecommendationSkillListEmptySuccess() {
+        when(recommendationRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.existsById(authorId)).thenReturn(true);
+        when(userRepository.existsById(receiverId)).thenReturn(true);
+        recommendationDto.setContent("Updated content");
+
+        RecommendationDto result = recommendationService.updateRecommendation(1L, recommendationDto);
+
+        Assertions.assertEquals("Updated content", result.getContent());
+        Assertions.assertNull(recommendationDto.getSkillOffers());
+        verify(recommendationRepository).update(1L, authorId, receiverId, "Updated content");
+        verify(skillOfferRepository).deleteAllByRecommendationId(1L);
+        verify(userRepository, times(2)).existsById(anyLong());
+    }
+
+    @Test
+    @DisplayName("Test update recommendation - recommendation not found - negative")
+    void testValidateRecommendationNotFound() {
+        when(recommendationRepository.existsById(anyLong())).thenReturn(false);
+        DataValidationException dataValidationException = assertThrows(DataValidationException.class,
+                () -> recommendationService.updateRecommendation(1L, recommendationDto));
+        Assertions.assertEquals("Recommendation not found with id: 1", dataValidationException.getMessage());
+    }
+
 
     @Test
     @DisplayName("Test delete recommendation - success")
@@ -161,7 +288,7 @@ public class RecommendationServiceTest {
         RecommendationDto result = recommendationService.getRecommendationById(1L);
 
         assertNotNull(result);
-        assertEquals(recommendationDto.getContent(), result.getContent());
+        Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
     }
 
     @Test
@@ -172,8 +299,8 @@ public class RecommendationServiceTest {
 
         List<RecommendationDto> result = recommendationService.getAllRecommendations();
 
-        assertEquals(1, result.size());
-        assertEquals(recommendationDto.getContent(), result.get(0).getContent());
+        Assertions.assertEquals(1, result.size());
+        Assertions.assertEquals(recommendationDto.getContent(), result.get(0).getContent());
     }
 
     @Test
@@ -186,8 +313,8 @@ public class RecommendationServiceTest {
 
         Page<RecommendationDto> result = recommendationService.getAllUserRecommendations(receiverId, pageable);
 
-        assertEquals(1, result.getTotalElements());
-        assertEquals(recommendationDto.getContent(), result.getContent().get(0).getContent());
+        Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertEquals(recommendationDto.getContent(), result.getContent().get(0).getContent());
     }
 
     @Test
@@ -200,18 +327,7 @@ public class RecommendationServiceTest {
 
         Page<RecommendationDto> result = recommendationService.getAllGivenRecommendations(authorId, pageable);
 
-        assertEquals(1, result.getTotalElements());
-        assertEquals(recommendationDto.getContent(), result.getContent().get(0).getContent());
-    }
-
-    @Test
-    @DisplayName("Test validate unique skills - throws exception on duplicate skills")
-    void testValidateSkillsAreUniqueThrowsException() {
-        when(userRepository.existsById(receiverId)).thenReturn(true);
-        when(userRepository.existsById(authorId)).thenReturn(true);
-        recommendationDto.setSkillOffers(List.of(new SkillOfferDto(1L), new SkillOfferDto(1L)));
-
-        DataValidationException dataValidationException = assertThrows(DataValidationException.class, () -> recommendationService.createRecommendation(recommendationDto));
-        assertEquals("Skill Offer list has duplicate skills", dataValidationException.getMessage());
+        Assertions.assertEquals(1, result.getTotalElements());
+        Assertions.assertEquals(recommendationDto.getContent(), result.getContent().get(0).getContent());
     }
 }
