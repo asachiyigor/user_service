@@ -1,7 +1,10 @@
 package school.faang.user_service.service.mentorship;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
@@ -28,6 +31,7 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   public static final String ERROR_RECEIVER_IS_MISSING = "Receiver is missing in DB";
   public static final String ERROR_EARLY_REQUEST = "Not allowed more than one request per valid period";
   public static final String ERROR_SELF_REQUEST = "Not allowed to send self-request";
+  public static final String ERROR_ALREADY_ACCEPTED = "Receiver is mentor of the requester already!";
 
   @Override
   public MentorshipRequestDto requestMentorship(MentorshipRequestDto mentorshipRequestDto) {
@@ -66,12 +70,13 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
       mentorshipRequestRepository.save(request);
       User requester = request.getRequester();
       User mentor = request.getReceiver();
-      List<User> requesterMentors = request.getRequester()
-          .getMentors();
+      List<User> requesterMentors = Optional.ofNullable(request.getRequester()
+              .getMentors())
+          .orElseGet(ArrayList::new);
       requesterMentors.add(mentor);
       userRepository.save(requester);
     } else {
-      throw new DataValidationException("Receiver is mentor of the requester already!");
+      throw new DataValidationException(ERROR_ALREADY_ACCEPTED);
     }
     return mentorshipRequestMapper.toDto(request);
   }
@@ -89,25 +94,25 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
 
   private boolean descriptionFilter(MentorshipRequestDto requestDto,
       RequestFilterDto filterDto) {
-    return requestDto.getDescription() == null || requestDto.getDescription().toLowerCase()
+    return filterDto.getDescription() == null || requestDto.getDescription().toLowerCase()
         .contains(filterDto.getDescription().toLowerCase());
   }
 
   private boolean requesterFilter(MentorshipRequestDto requestDto,
       RequestFilterDto filterDto) {
-    return requestDto.getRequesterId() == null || requestDto.getRequesterId()
+    return filterDto.getRequesterId() == null || requestDto.getRequesterId()
         .equals(filterDto.getRequesterId());
   }
 
   private boolean receiverFilter(MentorshipRequestDto requestDto,
       RequestFilterDto filterDto) {
-    return requestDto.getReceiverId() == null || requestDto.getReceiverId()
+    return filterDto.getReceiverId() == null || requestDto.getReceiverId()
         .equals(filterDto.getReceiverId());
   }
 
   private boolean statusFilter(MentorshipRequestDto requestDto,
       RequestFilterDto filterDto) {
-    return requestDto.getStatus() == null || requestDto.getStatus()
+    return filterDto.getStatus() == null || requestDto.getStatus()
         .equals(filterDto.getStatus());
   }
 
@@ -118,7 +123,8 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   }
 
   private void validateNotSelfRequest(MentorshipRequestDto mentorshipRequestDto) {
-    if (mentorshipRequestDto.getRequesterId().equals(mentorshipRequestDto.getReceiverId())) {
+    if (Objects.equals(mentorshipRequestDto.getRequesterId(),
+        mentorshipRequestDto.getReceiverId())) {
       throw new DataValidationException(ERROR_SELF_REQUEST);
     }
   }

@@ -46,7 +46,6 @@ public class MentorshipRequestController {
     return ResponseEntity.ok(mentorshipRequestService.getRequests(requestFilterDto));
   }
 
-
   private void validateMentorshipRequest(MentorshipRequestDto mentorshipRequestDto) {
     if (mentorshipRequestDto.getDescription().isEmpty()) {
       throw new DataValidationException("Please write why you need mentor");
