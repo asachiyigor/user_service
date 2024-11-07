@@ -3,7 +3,6 @@ package school.faang.user_service.service.recommendation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.dto.recommendation.RecommendationDto;
@@ -60,9 +59,8 @@ public class RecommendationService {
         Long recommendationId = recommendationRepository.create(authorId, receiverId, recommendationDto.getContent());
 
         skillOffers.ifPresent(offers -> saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId));
-        Recommendation savedRecommendation = recommendationRepository.findById(recommendationId)
-                .orElseThrow(() -> new DataValidationException("Recommendation not found with id: " + recommendationId));
-        return recommendationMapper.toDto(savedRecommendation);
+        recommendationDto.setCreatedAt(currentDateTime);
+        return recommendationDto;
     }
 
     @Transactional
@@ -71,6 +69,7 @@ public class RecommendationService {
 
         Long receiverId = recommendationDto.getReceiverId();
         Long authorId = recommendationDto.getAuthorId();
+        recommendationDto.setId(recommendationId);
         Optional<List<SkillOfferDto>> skillOffersNew = Optional.ofNullable(recommendationDto.getSkillOffers());
         validateUserIdExists(authorId);
         validateUserIdExists(receiverId);
@@ -82,8 +81,7 @@ public class RecommendationService {
         skillOfferRepository.deleteAllByRecommendationId(recommendationId);
         skillOffersNew.ifPresent(offers -> saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId));
         recommendationRepository.update(recommendationId, authorId, receiverId, recommendationDto.getContent());
-        Recommendation savedRecommendation = getRecommendationIfExists(recommendationId);
-        return recommendationMapper.toDto(savedRecommendation);
+        return recommendationDto;
     }
 
     @Transactional
