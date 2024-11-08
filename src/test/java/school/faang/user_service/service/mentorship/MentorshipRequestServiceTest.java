@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,44 +47,15 @@ public class MentorshipRequestServiceTest {
   @Mock
   private UserRepository userRepository;
 
-  private User requester;
-  private User receiver;
-  private MentorshipRequestDto requestDto;
-  private MentorshipRequest request;
-  private MentorshipRequest latestRequest;
-  private RequestFilterDto filterDto;
   private static final int MONTHS_AGO_NOT_OK = 2;
   private static final int MONTHS_AGO_OK = 4;
-
-  @BeforeEach
-  void setup() {
-    LocalDateTime originDate = LocalDateTime.now();
-    requester = User.builder()
-        .id(1L)
-        .build();
-    receiver = User.builder()
-        .id(2L)
-        .build();
-    requestDto = MentorshipRequestDto.builder()
-        .id(1L)
-        .description("Test description")
-        .requesterId(requester.getId())
-        .receiverId(receiver.getId())
-        .status(RequestStatus.PENDING)
-        .rejectionReason("Test rejection reason")
-        .createdAt(originDate.toString())
-        .build();
-    request = mentorshipRequestMapper.toEntity(requestDto);
-
-    latestRequest = mentorshipRequestMapper.toEntity(requestDto);
-    latestRequest.setId(2L);
-    latestRequest.setRequester(requester);
-    latestRequest.setReceiver(receiver);
-  }
 
   @Test
   @DisplayName("Should throw exception when requester does not exist")
   public void testCreateWithNonExistRequester() {
+    MentorshipRequest request = getDefaultRequest();
+    MentorshipRequestDto requestDto = mentorshipRequestMapper.toDto(request);
+
     DataValidationException exception = assertThrows(DataValidationException.class,
         () -> mentorshipRequestService.requestMentorship(requestDto));
 
@@ -99,6 +69,10 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should throw exception when receiver does not exist")
   public void testCreateWithNonExistReceiver() {
+    MentorshipRequest request = getDefaultRequest();
+    MentorshipRequestDto requestDto = mentorshipRequestMapper.toDto(request);
+    User requester = request.getRequester();
+
     when(userRepository.findById(requestDto.getRequesterId())).thenReturn(Optional.of(requester));
     when(userRepository.findById(requestDto.getReceiverId())).thenReturn(Optional.empty());
 
@@ -116,6 +90,12 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should throw exception when the mentorship requested again before previous acting period not finished")
   public void testCreateWithTooEarlyDate() {
+    MentorshipRequest request = getDefaultRequest();
+    MentorshipRequestDto requestDto = mentorshipRequestMapper.toDto(request);
+    User requester = request.getRequester();
+    User receiver = request.getReceiver();
+
+    MentorshipRequest latestRequest = getDefaultRequest();
     latestRequest.setCreatedAt(calcLatestRequestDate(MONTHS_AGO_NOT_OK));
 
     when(userRepository.findById(requestDto.getRequesterId())).thenReturn(Optional.of(requester));
@@ -139,7 +119,13 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should throw exception when requester and receiver are the one user")
   public void testCreateSelfRequest() {
+    MentorshipRequest request = getDefaultRequest();
+    MentorshipRequestDto requestDto = mentorshipRequestMapper.toDto(request);
+    User requester = request.getRequester();
+
+    MentorshipRequest latestRequest = getDefaultRequest();
     latestRequest.setCreatedAt(calcLatestRequestDate(MONTHS_AGO_OK));
+
     requestDto.setReceiverId(requestDto.getRequesterId());
 
     when(userRepository.findById(requestDto.getRequesterId())).thenReturn(Optional.of(requester));
@@ -162,6 +148,12 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should create new request when valid input data provided")
   public void testCreateSave() {
+    MentorshipRequest request = getDefaultRequest();
+    MentorshipRequestDto requestDto = mentorshipRequestMapper.toDto(request);
+    User requester = request.getRequester();
+    User receiver = request.getReceiver();
+
+    MentorshipRequest latestRequest = getDefaultRequest();
     latestRequest.setCreatedAt(calcLatestRequestDate(MONTHS_AGO_OK));
 
     when(userRepository.findById(requestDto.getRequesterId())).thenReturn(Optional.of(requester));
@@ -187,8 +179,8 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should return all requests with NO FILTER applied")
   public void testGetRequestsWithNoFilterApplied() {
-    filterDto = new RequestFilterDto();
-    List<MentorshipRequest> requests = List.of(request, latestRequest);
+    RequestFilterDto filterDto = new RequestFilterDto();
+    List<MentorshipRequest> requests = requestsToFilter();
 
     when(mentorshipRequestRepository.findAll()).thenReturn(requests);
     var requestsDto = mentorshipRequestService.getRequests(filterDto);
@@ -201,6 +193,7 @@ public class MentorshipRequestServiceTest {
   @DisplayName("Should return requests with DESCRIPTION FILTER applied")
   public void testGetRequestsWithDescriptionFilterApplied() {
     List<MentorshipRequest> requests = requestsToFilter();
+    RequestFilterDto filterDto = new RequestFilterDto();
     filterDto.setDescription("help");
 
     when(mentorshipRequestRepository.findAll()).thenReturn(requests);
@@ -214,7 +207,9 @@ public class MentorshipRequestServiceTest {
   @DisplayName("Should return requests with REQUESTER FILTER applied")
   public void testGetRequestsWithRequesterFilterApplied() {
     List<MentorshipRequest> requests = requestsToFilter();
-    filterDto.setRequesterId(requester.getId());
+    RequestFilterDto filterDto = new RequestFilterDto();
+    long requesterId = requests.get(0).getRequester().getId();
+    filterDto.setRequesterId(requesterId);
 
     when(mentorshipRequestRepository.findAll()).thenReturn(requests);
     var requestsDto = mentorshipRequestService.getRequests(filterDto);
@@ -227,7 +222,9 @@ public class MentorshipRequestServiceTest {
   @DisplayName("Should return requests with RECEIVER FILTER applied")
   public void testGetRequestsWithReceiverFilterApplied() {
     List<MentorshipRequest> requests = requestsToFilter();
-    filterDto.setReceiverId(receiver.getId());
+    RequestFilterDto filterDto = new RequestFilterDto();
+    long receiverId = requests.get(0).getReceiver().getId();
+    filterDto.setReceiverId(receiverId);
 
     when(mentorshipRequestRepository.findAll()).thenReturn(requests);
     var requestsDto = mentorshipRequestService.getRequests(filterDto);
@@ -240,6 +237,7 @@ public class MentorshipRequestServiceTest {
   @DisplayName("Should return requests with STATUS FILTER applied")
   public void testGetRequestsWithStatusFilterApplied() {
     List<MentorshipRequest> requests = requestsToFilter();
+    RequestFilterDto filterDto = new RequestFilterDto();
     filterDto.setStatus(RequestStatus.PENDING);
 
     when(mentorshipRequestRepository.findAll()).thenReturn(requests);
@@ -253,8 +251,11 @@ public class MentorshipRequestServiceTest {
   @DisplayName("Should return requests with ALL FILTERS applied")
   public void testGetRequestsWithAllFiltersApplied() {
     List<MentorshipRequest> requests = requestsToFilter();
-    filterDto.setRequesterId(requester.getId());
-    filterDto.setReceiverId(receiver.getId());
+    RequestFilterDto filterDto = new RequestFilterDto();
+    long requesterId = requests.get(0).getRequester().getId();
+    long receiverId = requests.get(0).getReceiver().getId();
+    filterDto.setRequesterId(requesterId);
+    filterDto.setReceiverId(receiverId);
     filterDto.setStatus(RequestStatus.PENDING);
     filterDto.setDescription("HELLO");
 
@@ -263,24 +264,6 @@ public class MentorshipRequestServiceTest {
     verify(mentorshipRequestRepository).findAll();
 
     assertEquals(1, requestsDto.size());
-  }
-
-  private List<MentorshipRequest> requestsToFilter() {
-    List<MentorshipRequest> requests = List.of(request, latestRequest);
-
-    request.setRequester(requester);
-    request.setReceiver(receiver);
-    request.setDescription("Hello");
-    request.setStatus(RequestStatus.PENDING);
-
-    latestRequest.setRequester(receiver);
-    latestRequest.setReceiver(requester);
-    latestRequest.setDescription("I need your help");
-    latestRequest.setStatus(RequestStatus.REJECTED);
-
-    filterDto = new RequestFilterDto();
-
-    return requests;
   }
 
   @Test
@@ -300,7 +283,8 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should return existing request by id")
   public void testFindByIdExistingRequest() {
-    Long id = request.getId();
+    MentorshipRequest request = getDefaultRequest();
+    long id = request.getId();
 
     when(mentorshipRequestRepository.findById(id)).thenReturn(Optional.of(request));
     var foundRequest = mentorshipRequestService.findById(id);
@@ -315,8 +299,12 @@ public class MentorshipRequestServiceTest {
   public void testAcceptNonExistRequest() {
     long id = 100L;
 
+    when(mentorshipRequestRepository.findById(id)).thenReturn(Optional.empty());
+
     DataValidationException exception = assertThrows(DataValidationException.class,
-        () -> mentorshipRequestService.findById(id));
+        () -> mentorshipRequestService.acceptRequest(id));
+
+    verify(mentorshipRequestRepository).findById(id);
 
     assertEquals("Mentorship request id=" + id + " not found", exception.getMessage());
   }
@@ -324,7 +312,8 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should throw exception when try to accept already accepted request")
   public void testAcceptExistRequestAlreadyAccepted() {
-    requestToUpdateStatus(RequestStatus.ACCEPTED);
+    MentorshipRequest request = getDefaultRequest();
+    request.setStatus(RequestStatus.ACCEPTED);
     long id = request.getId();
 
     when(mentorshipRequestRepository.findById(id)).thenReturn(Optional.of(request));
@@ -340,7 +329,9 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should change the status of existing not accepted request to ACCEPTED")
   public void testAcceptExistRequestValid() {
-    requestToUpdateStatus(RequestStatus.PENDING);
+    MentorshipRequest request = getDefaultRequest();
+    request.setStatus(RequestStatus.PENDING);
+    User requester = request.getRequester();
     long id = request.getId();
 
     when(mentorshipRequestRepository.findById(id)).thenReturn(Optional.of(request));
@@ -359,7 +350,8 @@ public class MentorshipRequestServiceTest {
   @Test
   @DisplayName("Should change the status of existing not rejected request to REJECTED")
   public void testRejectExistRequestValid() {
-    requestToUpdateStatus(RequestStatus.PENDING);
+    MentorshipRequest request = getDefaultRequest();
+    request.setStatus(RequestStatus.PENDING);
     long id = request.getId();
     RejectionDto rejectionDto = new RejectionDto("Test rejection reason");
 
@@ -374,14 +366,42 @@ public class MentorshipRequestServiceTest {
     assertEquals(RequestStatus.REJECTED, requestDto.getStatus());
   }
 
-  private void requestToUpdateStatus(RequestStatus status) {
-    request.setRequester(requester);
-    request.setReceiver(receiver);
-    request.setStatus(status);
+  private List<MentorshipRequest> requestsToFilter() {
+    MentorshipRequest request = getDefaultRequest();
+    MentorshipRequest anotherRequest = getDefaultRequest();
+    List<MentorshipRequest> requests = List.of(request, anotherRequest);
+
+    request.setDescription("Hello");
+    request.setStatus(RequestStatus.PENDING);
+
+    anotherRequest.setCreatedAt(calcLatestRequestDate(MONTHS_AGO_OK));
+    anotherRequest.setDescription("I need your help");
+    anotherRequest.setStatus(RequestStatus.REJECTED);
+    anotherRequest.setRequester(request.getReceiver());
+    anotherRequest.setReceiver(request.getRequester());
+
+    return requests;
   }
 
   private LocalDateTime calcLatestRequestDate(int monthsAgo) {
     return LocalDateTime.now().minusMonths(monthsAgo);
   }
 
+  private MentorshipRequest getDefaultRequest() {
+    User requester = User.builder()
+        .id(1L)
+        .build();
+    User receiver = User.builder()
+        .id(2L)
+        .build();
+    return MentorshipRequest.builder()
+        .id(1L)
+        .description("Test request")
+        .requester(requester)
+        .receiver(receiver)
+        .status(RequestStatus.PENDING)
+        .rejectionReason("Test rejection reason")
+        .createdAt(LocalDateTime.now())
+        .build();
+  }
 }
