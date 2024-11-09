@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SkillDto {
     private Long id;
-
     @NotNull(message = "Title не может быть null")
     @NotEmpty
     private String title;
