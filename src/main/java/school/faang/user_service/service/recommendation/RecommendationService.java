@@ -60,6 +60,7 @@ public class RecommendationService {
 
         skillOffers.ifPresent(offers -> saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId));
         recommendationDto.setCreatedAt(currentDateTime);
+        recommendationDto.setId(recommendationId);
         return recommendationDto;
     }
 
@@ -87,7 +88,6 @@ public class RecommendationService {
     @Transactional
     public void deleteRecommendation(Long recommendationId) {
         Recommendation recommendation = getRecommendationIfExists(recommendationId);
-        skillOfferRepository.deleteAllByRecommendationId(recommendationId);
         recommendationRepository.delete(recommendation);
     }
 

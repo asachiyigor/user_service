@@ -88,13 +88,14 @@ public class RecommendationServiceTest {
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
+        verify(userRepository, times(2)).existsById(anyLong());
+        verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
         assertNotNull(result);
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
         Assertions.assertEquals(receiverId, result.getReceiverId());
         Assertions.assertEquals(recommendationContent, result.getContent());
-        verify(userRepository, times(2)).existsById(anyLong());
-        verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
+
     }
 
     @Test
@@ -108,6 +109,10 @@ public class RecommendationServiceTest {
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
+        verify(recommendationRepository).create(authorId, receiverId, recommendationDto.getContent());
+        verify(skillRepository).existsById(anyLong());
+        verify(skillOfferRepository).create(anyLong(), anyLong());
+        verify(userRepository, times(2)).existsById(anyLong());
         assertNotNull(result);
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
@@ -115,11 +120,6 @@ public class RecommendationServiceTest {
         Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
         List<SkillOfferDto> skillOffers = Collections.singletonList(new SkillOfferDto(1L));
         Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
-
-        verify(recommendationRepository).create(authorId, receiverId, recommendationDto.getContent());
-        verify(skillRepository).existsById(anyLong());
-        verify(skillOfferRepository).create(anyLong(), anyLong());
-        verify(userRepository, times(2)).existsById(anyLong());
     }
 
     @Test
@@ -135,6 +135,11 @@ public class RecommendationServiceTest {
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
+        verify(recommendationRepository).create(authorId, receiverId, recommendationDto.getContent());
+        verify(skillRepository).existsById(anyLong());
+        verify(skillOfferRepository).create(anyLong(), anyLong());
+        verify(userRepository, times(2)).existsById(anyLong());
+        verify(userSkillGuaranteeRepository).addSkillGuarantee(receiverId, skillId, authorId);
         assertNotNull(result);
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
@@ -142,12 +147,6 @@ public class RecommendationServiceTest {
         Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
         List<SkillOfferDto> skillOffers = Collections.singletonList(new SkillOfferDto(1L));
         Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
-
-        verify(recommendationRepository).create(authorId, receiverId, recommendationDto.getContent());
-        verify(skillRepository).existsById(anyLong());
-        verify(skillOfferRepository).create(anyLong(), anyLong());
-        verify(userRepository, times(2)).existsById(anyLong());
-        verify(userSkillGuaranteeRepository).addSkillGuarantee(receiverId, skillId, authorId);
     }
 
     @Test
@@ -163,21 +162,23 @@ public class RecommendationServiceTest {
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
+        verify(userRepository, times(2)).existsById(anyLong());
+        verify(userRepository, times(2)).existsById(anyLong());
+        verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
         assertNotNull(result);
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
         Assertions.assertEquals(receiverId, result.getReceiverId());
         Assertions.assertEquals(recommendationContent, result.getContent());
-        verify(userRepository, times(2)).existsById(anyLong());
-        verify(userRepository, times(2)).existsById(anyLong());
-        verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
+
     }
 
     @Test
     @DisplayName("Test create recommendation - user not found - negative")
     void testValidateRecommendationUserNotFound() {
         when(userRepository.existsById(authorId)).thenReturn(false);
-        assertThrows(DataValidationException.class, () -> recommendationService.createRecommendation(recommendationDto));
+        DataValidationException dataValidationException = assertThrows(DataValidationException.class, () -> recommendationService.createRecommendation(recommendationDto));
+        Assertions.assertEquals("User with specified ID does not exist. Id: 1", dataValidationException.getMessage());
     }
 
     @Test
@@ -231,14 +232,14 @@ public class RecommendationServiceTest {
 
         RecommendationDto result = recommendationService.updateRecommendation(1L, recommendationDto);
 
-        Assertions.assertEquals("Updated content", result.getContent());
-        List<SkillOfferDto> skillOffers = Arrays.asList(new SkillOfferDto(1L), new SkillOfferDto(2L));
-        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
         verify(recommendationRepository).update(1L, authorId, receiverId, "Updated content");
         verify(skillOfferRepository).deleteAllByRecommendationId(1L);
         verify(skillRepository, times(2)).existsById(anyLong());
         verify(skillOfferRepository, times(2)).create(anyLong(), anyLong());
         verify(userRepository, times(2)).existsById(anyLong());
+        Assertions.assertEquals("Updated content", result.getContent());
+        List<SkillOfferDto> skillOffers = Arrays.asList(new SkillOfferDto(1L), new SkillOfferDto(2L));
+        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
     }
 
     @Test
@@ -251,11 +252,11 @@ public class RecommendationServiceTest {
 
         RecommendationDto result = recommendationService.updateRecommendation(1L, recommendationDto);
 
-        Assertions.assertEquals("Updated content", result.getContent());
-        Assertions.assertNull(recommendationDto.getSkillOffers());
         verify(recommendationRepository).update(1L, authorId, receiverId, "Updated content");
         verify(skillOfferRepository).deleteAllByRecommendationId(1L);
         verify(userRepository, times(2)).existsById(anyLong());
+        Assertions.assertEquals("Updated content", result.getContent());
+        Assertions.assertNull(recommendationDto.getSkillOffers());
     }
 
     @Test
@@ -272,10 +273,7 @@ public class RecommendationServiceTest {
     @DisplayName("Test delete recommendation - success")
     void testDeleteRecommendationSuccess() {
         when(recommendationRepository.findById(1L)).thenReturn(Optional.of(recommendation));
-
         recommendationService.deleteRecommendation(1L);
-
-        verify(skillOfferRepository).deleteAllByRecommendationId(1L);
         verify(recommendationRepository).delete(recommendation);
     }
 
