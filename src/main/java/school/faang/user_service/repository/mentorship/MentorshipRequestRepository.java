@@ -1,13 +1,10 @@
 package school.faang.user_service.repository.mentorship;
 
-import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
-import school.faang.user_service.entity.MentorshipRequest;
-import school.faang.user_service.entity.User;
+import school.faang.user_service.entity.mentorship.MentorshipRequest;
 
 @Repository
 public interface MentorshipRequestRepository extends JpaRepository<MentorshipRequest, Long> {

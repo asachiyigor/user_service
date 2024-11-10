@@ -10,8 +10,9 @@ import org.springframework.stereotype.Service;
 import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
 import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
-import school.faang.user_service.entity.MentorshipRequest;
-import school.faang.user_service.entity.RequestStatus;
+import school.faang.user_service.entity.mentorship.MentorshipRequest;
+import school.faang.user_service.entity.mentorship.RequestError;
+import school.faang.user_service.entity.mentorship.RequestStatus;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.exception.mentorship.DataValidationException;
 import school.faang.user_service.mapper.mentorship.MentorshipRequestMapper;
@@ -27,11 +28,6 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   private final UserRepository userRepository;
 
   public static final int VALID_MONTHS = 3;
-  public static final String ERROR_REQUESTER_IS_MISSING = "Requester in missing in DB";
-  public static final String ERROR_RECEIVER_IS_MISSING = "Receiver is missing in DB";
-  public static final String ERROR_EARLY_REQUEST = "Not allowed more than one request per valid period";
-  public static final String ERROR_SELF_REQUEST = "Not allowed to send self-request";
-  public static final String ERROR_ALREADY_ACCEPTED = "Receiver is mentor of the requester already!";
 
   @Override
   public MentorshipRequestDto requestMentorship(MentorshipRequestDto mentorshipRequestDto) {
@@ -59,7 +55,7 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   public MentorshipRequest findById(long requestId) {
     return mentorshipRequestRepository.findById(requestId)
         .orElseThrow(
-            () -> new DataValidationException("Mentorship request id=" + requestId + " not found"));
+            () -> new DataValidationException(RequestError.NOT_FOUND.getMessage() + requestId));
   }
 
   @Override
@@ -76,7 +72,7 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
       requesterMentors.add(mentor);
       userRepository.save(requester);
     } else {
-      throw new DataValidationException(ERROR_ALREADY_ACCEPTED);
+      throw new DataValidationException(RequestError.ALREADY_ACCEPTED.getMessage());
     }
     return mentorshipRequestMapper.toDto(request);
   }
@@ -125,7 +121,7 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
   private void validateNotSelfRequest(MentorshipRequestDto mentorshipRequestDto) {
     if (Objects.equals(mentorshipRequestDto.getRequesterId(),
         mentorshipRequestDto.getReceiverId())) {
-      throw new DataValidationException(ERROR_SELF_REQUEST);
+      throw new DataValidationException(RequestError.SELF_REQUEST.getMessage());
     }
   }
 
@@ -135,16 +131,16 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
             mentorshipRequestDto.getReceiverId())
         .ifPresent(mentorshipRequest -> {
           if (mentorshipRequest.getCreatedAt().isAfter(thresholdDate)) {
-            throw new DataValidationException(ERROR_EARLY_REQUEST);
+            throw new DataValidationException(RequestError.EARLY_REQUEST.getMessage());
           }
         });
   }
 
   private void validateExistUsers(MentorshipRequestDto mentorshipRequestDto) {
     userRepository.findById(mentorshipRequestDto.getRequesterId())
-        .orElseThrow(() -> new DataValidationException(ERROR_REQUESTER_IS_MISSING));
+        .orElseThrow(() -> new DataValidationException(RequestError.REQUESTER_IS_MISSING.getMessage()));
     userRepository.findById(mentorshipRequestDto.getReceiverId())
-        .orElseThrow(() -> new DataValidationException(ERROR_RECEIVER_IS_MISSING));
+        .orElseThrow(() -> new DataValidationException(RequestError.RECEIVER_IS_MISSING.getMessage()));
   }
 
 }

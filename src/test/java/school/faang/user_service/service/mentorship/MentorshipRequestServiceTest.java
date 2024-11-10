@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,15 +21,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
 import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
-import school.faang.user_service.entity.MentorshipRequest;
-import school.faang.user_service.entity.RequestStatus;
+import school.faang.user_service.entity.mentorship.MentorshipRequest;
+import school.faang.user_service.entity.mentorship.RequestError;
+import school.faang.user_service.entity.mentorship.RequestStatus;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.exception.mentorship.DataValidationException;
 import school.faang.user_service.mapper.mentorship.MentorshipRequestMapper;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.mentorship.MentorshipRequestRepository;
 
-@Slf4j
 @ExtendWith(MockitoExtension.class)
 public class MentorshipRequestServiceTest {
 
@@ -62,7 +61,7 @@ public class MentorshipRequestServiceTest {
     verify(userRepository).findById(requestDto.getRequesterId());
 
     assertEquals(
-        MentorshipRequestServiceImpl.ERROR_REQUESTER_IS_MISSING,
+        RequestError.REQUESTER_IS_MISSING.getMessage(),
         exception.getMessage());
   }
 
@@ -83,7 +82,7 @@ public class MentorshipRequestServiceTest {
     verify(userRepository).findById(requestDto.getReceiverId());
 
     assertEquals(
-        MentorshipRequestServiceImpl.ERROR_RECEIVER_IS_MISSING,
+        RequestError.RECEIVER_IS_MISSING.getMessage(),
         exception.getMessage());
   }
 
@@ -112,7 +111,7 @@ public class MentorshipRequestServiceTest {
         requestDto.getReceiverId());
 
     assertEquals(
-        MentorshipRequestServiceImpl.ERROR_EARLY_REQUEST,
+        RequestError.EARLY_REQUEST.getMessage(),
         exception.getMessage());
   }
 
@@ -141,7 +140,7 @@ public class MentorshipRequestServiceTest {
         requestDto.getReceiverId());
 
     assertEquals(
-        MentorshipRequestServiceImpl.ERROR_SELF_REQUEST,
+        RequestError.SELF_REQUEST.getMessage(),
         exception.getMessage());
   }
 
@@ -272,12 +271,12 @@ public class MentorshipRequestServiceTest {
     Long id = 100L;
 
     when(mentorshipRequestRepository.findById(id)).thenThrow(
-        new DataValidationException("Mentorship request id=" + id + " not found"));
+        new DataValidationException(RequestError.NOT_FOUND.getMessage() + id));
     var exception = assertThrows(DataValidationException.class,
         () -> mentorshipRequestRepository.findById(id));
     verify(mentorshipRequestRepository).findById(id);
 
-    assertEquals("Mentorship request id=" + id + " not found", exception.getMessage());
+    assertEquals(RequestError.NOT_FOUND.getMessage() + id, exception.getMessage());
   }
 
   @Test
@@ -306,7 +305,7 @@ public class MentorshipRequestServiceTest {
 
     verify(mentorshipRequestRepository).findById(id);
 
-    assertEquals("Mentorship request id=" + id + " not found", exception.getMessage());
+    assertEquals(RequestError.NOT_FOUND.getMessage() + id, exception.getMessage());
   }
 
   @Test
@@ -323,7 +322,7 @@ public class MentorshipRequestServiceTest {
 
     verify(mentorshipRequestRepository).findById(id);
 
-    assertEquals(MentorshipRequestServiceImpl.ERROR_ALREADY_ACCEPTED, exception.getMessage());
+    assertEquals(RequestError.ALREADY_ACCEPTED.getMessage(), exception.getMessage());
   }
 
   @Test

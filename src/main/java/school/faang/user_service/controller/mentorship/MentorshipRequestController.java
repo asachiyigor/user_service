@@ -2,7 +2,6 @@ package school.faang.user_service.controller.mentorship;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,27 +22,27 @@ public class MentorshipRequestController {
   private final MentorshipRequestService mentorshipRequestService;
 
   @PostMapping("/reject/{id}")
-  public ResponseEntity<MentorshipRequestDto> rejectRequest(@PathVariable long id,
+  public MentorshipRequestDto rejectRequest(@PathVariable long id,
       @RequestBody RejectionDto rejectionDto) {
-    return ResponseEntity.ok(mentorshipRequestService.rejectRequest(id, rejectionDto));
+    return mentorshipRequestService.rejectRequest(id, rejectionDto);
   }
 
   @PostMapping("/accept/{id}")
-  public ResponseEntity<MentorshipRequestDto> acceptRequest(@PathVariable long id) {
-    return ResponseEntity.ok(mentorshipRequestService.acceptRequest(id));
+  public MentorshipRequestDto acceptRequest(@PathVariable long id) {
+    return mentorshipRequestService.acceptRequest(id);
   }
 
   @PostMapping("/add")
-  public ResponseEntity<MentorshipRequestDto> requestMentorship(
+  public MentorshipRequestDto requestMentorship(
       @RequestBody MentorshipRequestDto mentorshipRequestDto) {
     validateMentorshipRequest(mentorshipRequestDto);
-    return ResponseEntity.ok(mentorshipRequestService.requestMentorship(mentorshipRequestDto));
+    return mentorshipRequestService.requestMentorship(mentorshipRequestDto);
   }
 
   @GetMapping("/list")
-  public ResponseEntity<List<MentorshipRequestDto>> getRequests(
+  public List<MentorshipRequestDto> getRequests(
       @RequestBody RequestFilterDto requestFilterDto) {
-    return ResponseEntity.ok(mentorshipRequestService.getRequests(requestFilterDto));
+    return mentorshipRequestService.getRequests(requestFilterDto);
   }
 
   private void validateMentorshipRequest(MentorshipRequestDto mentorshipRequestDto) {

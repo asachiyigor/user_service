@@ -1,7 +1,7 @@
 package school.faang.user_service.dto.mentorship;
 
 import lombok.Data;
-import school.faang.user_service.entity.RequestStatus;
+import school.faang.user_service.entity.mentorship.RequestStatus;
 
 @Data
 public class RequestFilterDto {
