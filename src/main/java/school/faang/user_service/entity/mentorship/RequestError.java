@@ -11,9 +11,9 @@ public enum RequestError {
   ALREADY_ACCEPTED("Receiver is mentor of the requester already!"),
   NOT_FOUND("Mentorship request not found, id=");
 
-  private String message;
+  private final String message;
 
-  private RequestError(String message) {
+  RequestError(String message) {
     this.message = message;
   }
 

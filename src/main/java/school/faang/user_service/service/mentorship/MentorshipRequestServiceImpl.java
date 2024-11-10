@@ -138,9 +138,11 @@ public class MentorshipRequestServiceImpl implements MentorshipRequestService {
 
   private void validateExistUsers(MentorshipRequestDto mentorshipRequestDto) {
     userRepository.findById(mentorshipRequestDto.getRequesterId())
-        .orElseThrow(() -> new DataValidationException(RequestError.REQUESTER_IS_MISSING.getMessage()));
+        .orElseThrow(
+            () -> new DataValidationException(RequestError.REQUESTER_IS_MISSING.getMessage()));
     userRepository.findById(mentorshipRequestDto.getReceiverId())
-        .orElseThrow(() -> new DataValidationException(RequestError.RECEIVER_IS_MISSING.getMessage()));
+        .orElseThrow(
+            () -> new DataValidationException(RequestError.RECEIVER_IS_MISSING.getMessage()));
   }
 
 }
