@@ -146,15 +146,9 @@ public class RecommendationRequestServiceTest {
     public void testGetRequestsWithFilerSuccess() {
         Filter<RequestFilterDto, RecommendationRequest> mockFilter = mock(Filter.class);
         List<Filter<RequestFilterDto, RecommendationRequest>> filters = List.of(mockFilter);
+
         requestService = new RecommendationRequestService(requestRepository, requestMapper, rejectionMapper, filters,
                 userService, skillRequestService, skillService);
-
-        when(filters.get(0).isApplicable(any())).thenReturn(true);
-        when(filters.get(0).apply(any(), any())).thenAnswer(invocation -> {
-            Stream<RecommendationRequest> requestStream = invocation.getArgument(0);
-            RequestFilterDto filterDto = invocation.getArgument(1);
-            return requestStream.filter(request -> request.getStatus().equals(filterDto.getStatus()));
-        });
 
         RequestFilterDto filterDto = RequestFilterDto.builder().status(RequestStatus.PENDING).build();
         List<RecommendationRequest> requests = List.of(
@@ -162,8 +156,11 @@ public class RecommendationRequestServiceTest {
                 RecommendationRequest.builder().status(RequestStatus.REJECTED).build()
         );
         RecommendationRequestDto requestDto = RecommendationRequestDto.builder().status(RequestStatus.PENDING).build();
+        Stream<RecommendationRequest> requestStream = Stream.of(requests.get(0));
 
         when(requestRepository.findAll()).thenReturn(requests);
+        when(filters.get(0).isApplicable(any())).thenReturn(true);
+        when(filters.get(0).apply(any(),any())).thenReturn(requestStream);
         when(requestMapper.toDto(requests.get(0))).thenReturn(requestDto);
 
         List<RecommendationRequestDto> result = requestService.getRequests(filterDto);
