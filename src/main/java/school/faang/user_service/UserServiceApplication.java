@@ -14,7 +14,9 @@ import org.springframework.context.annotation.Bean;
 @OpenAPIDefinition(
         info = @Info(
                 title = "User Service",
-                version = "1.0.0")
+                version = "1.0.0",
+                description = "Description: Faang School - User service project"
+        )
 )
 public class UserServiceApplication {
 
