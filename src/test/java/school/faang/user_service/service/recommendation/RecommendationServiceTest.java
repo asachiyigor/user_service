@@ -105,7 +105,8 @@ public class RecommendationServiceTest {
         when(userRepository.existsById(receiverId)).thenReturn(true);
         when(skillRepository.existsById(skillId)).thenReturn(true);
         when(recommendationRepository.create(authorId, receiverId, recommendationDto.getContent())).thenReturn(1L);
-        recommendationDto.setSkillOffers(Collections.singletonList(new SkillOfferDto(1L)));
+        List<SkillOfferDto> expectedSkillOffers = Collections.singletonList(new SkillOfferDto(1L));
+        recommendationDto.setSkillOffers(expectedSkillOffers);
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
@@ -114,12 +115,11 @@ public class RecommendationServiceTest {
         verify(skillOfferRepository).create(anyLong(), anyLong());
         verify(userRepository, times(2)).existsById(anyLong());
         assertNotNull(result);
+        Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
         Assertions.assertEquals(receiverId, result.getReceiverId());
-        Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
-        List<SkillOfferDto> skillOffers = Collections.singletonList(new SkillOfferDto(1L));
-        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
+        Assertions.assertEquals(recommendationDto.getSkillOffers(), expectedSkillOffers);
     }
 
     @Test
@@ -131,7 +131,8 @@ public class RecommendationServiceTest {
         when(recommendationRepository.create(authorId, receiverId, recommendationDto.getContent())).thenReturn(1L);
         when(skillRepository.findUserSkill(skillId, receiverId)).thenReturn(Optional.of(new Skill()));
         when(userSkillGuaranteeRepository.existsGuarantorForUserAndSkill(receiverId, skillId, authorId)).thenReturn(false);
-        recommendationDto.setSkillOffers(Collections.singletonList(new SkillOfferDto(1L)));
+        List<SkillOfferDto> expectedSkillOffers = Collections.singletonList(new SkillOfferDto(1L));
+        recommendationDto.setSkillOffers(expectedSkillOffers);
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
 
@@ -145,8 +146,7 @@ public class RecommendationServiceTest {
         Assertions.assertEquals(authorId, result.getAuthorId());
         Assertions.assertEquals(receiverId, result.getReceiverId());
         Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
-        List<SkillOfferDto> skillOffers = Collections.singletonList(new SkillOfferDto(1L));
-        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
+        Assertions.assertEquals(recommendationDto.getSkillOffers(), expectedSkillOffers);
     }
 
     @Test
@@ -228,7 +228,8 @@ public class RecommendationServiceTest {
         when(userRepository.existsById(receiverId)).thenReturn(true);
         when(skillRepository.existsById(anyLong())).thenReturn(true);
         recommendationDto.setContent("Updated content");
-        recommendationDto.setSkillOffers(List.of(new SkillOfferDto(1L), new SkillOfferDto(2L)));
+        List<SkillOfferDto> expectedSkillOffers = Arrays.asList(new SkillOfferDto(1L), new SkillOfferDto(2L));
+        recommendationDto.setSkillOffers(expectedSkillOffers);
 
         RecommendationDto result = recommendationService.updateRecommendation(1L, recommendationDto);
 
@@ -238,8 +239,7 @@ public class RecommendationServiceTest {
         verify(skillOfferRepository, times(2)).create(anyLong(), anyLong());
         verify(userRepository, times(2)).existsById(anyLong());
         Assertions.assertEquals("Updated content", result.getContent());
-        List<SkillOfferDto> skillOffers = Arrays.asList(new SkillOfferDto(1L), new SkillOfferDto(2L));
-        Assertions.assertEquals(recommendationDto.getSkillOffers(), skillOffers);
+        Assertions.assertEquals(recommendationDto.getSkillOffers(), expectedSkillOffers);
     }
 
     @Test
