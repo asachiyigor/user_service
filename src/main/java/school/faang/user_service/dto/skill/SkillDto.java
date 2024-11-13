@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 
 @Builder
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SkillDto {
     private Long id;
-
     @NotNull(message = "Title не может быть null")
     @NotEmpty
     private String title;
