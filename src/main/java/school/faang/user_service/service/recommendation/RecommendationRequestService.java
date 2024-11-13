@@ -76,15 +76,6 @@ public class RecommendationRequestService {
                 .distinct()
                 .map(requestMapper::toDto)
                 .toList();
-//        for (Filter<RecommendationRequest, RequestFilterDto> filter : filters) {
-//            if (filter.isApplicable(filterDto)) {
-//                requestStream = filter.apply(requestStream, filterDto);
-//            }
-//        }
-//        return requestStream
-//                .distinct()
-//                .map(requestMapper::toDto)
-//                .toList();
     }
 
     public RecommendationRequestDto getRequest(@NotNull @Min(1) Long id) {

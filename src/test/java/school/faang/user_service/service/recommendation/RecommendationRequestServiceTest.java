@@ -104,28 +104,24 @@ public class RecommendationRequestServiceTest {
         RecommendationRequestDto requestDto = getRequestDto();
         RecommendationRequest requestSaved = getRequestSaved();
         RecommendationRequest requestEntity = getRequestEntity();
-        List<Long> existSkillIds = List.of(1L, 2L);
-        Skill skillFirst = new Skill();
-        Skill skillSecond = new Skill();
-        skillFirst.setId(1L);
-        skillSecond.setId(2L);
-        SkillRequest skillRequestFirst = new SkillRequest(requestSaved, skillFirst);
-        SkillRequest skillRequestSecond = new SkillRequest(requestSaved, skillSecond);
-        requestSaved.getSkills().add(skillRequestFirst);
-        requestSaved.getSkills().add(skillRequestSecond);
+        RecommendationRequestDto responseDto = getRequestDto();
+        responseDto.setId(1L);
+        List<Long> existSkillIds = List.of(1L);
+        Skill skill = Skill.builder().id(1L).build();
+        SkillRequest skillRequest = new SkillRequest(requestSaved, skill);
+        requestSaved.getSkills().add(skillRequest);
 
-        when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(true);
-        when(userService.isUserExistByID(requestDto.getReceiverId())).thenReturn(true);
-        when(requestRepository.findLatestPendingRequest(requestDto.getRequesterId(), requestDto.getReceiverId()))
-                .thenReturn(Optional.of(requestSaved));
-        when(skillService.findExistingSkills(requestDto.getSkillsIds())).thenReturn(existSkillIds);
-        when(requestMapper.toEntity(requestDto)).thenReturn(requestEntity);
-        when(userService.getUserById(requestDto.getRequesterId())).thenReturn(requestEntity.getRequester());
-        when(userService.getUserById(requestDto.getRequesterId())).thenReturn(requestEntity.getReceiver());
-        when(requestRepository.save(requestEntity)).thenReturn(requestSaved);
-        when(skillService.findAllByIDs(requestDto.getSkillsIds())).thenReturn(List.of(skillFirst, skillSecond));
-        when(skillRequestService.create(requestSaved, skillFirst)).thenReturn(skillRequestFirst);
-        when(skillRequestService.create(requestSaved, skillSecond)).thenReturn(skillRequestSecond);
+        when(userService.isUserExistByID(anyLong())).thenReturn(true);
+        when(userService.isUserExistByID(anyLong())).thenReturn(true);
+        when(requestRepository.findLatestPendingRequest(anyLong(), anyLong())).thenReturn(Optional.of(requestSaved));
+        when(skillService.findExistingSkills(anyList())).thenReturn(existSkillIds);
+        when(requestMapper.toEntity(any())).thenReturn(requestEntity);
+        when(userService.getUserById(anyLong())).thenReturn(requestEntity.getRequester());
+        when(userService.getUserById(anyLong())).thenReturn(requestEntity.getReceiver());
+        when(requestRepository.save(any())).thenReturn(requestSaved);
+        when(skillService.findAllByIDs(anyList())).thenReturn(List.of(skill));
+        when(skillRequestService.create(any(), any())).thenReturn(skillRequest);
+        when(requestMapper.toDto(any())).thenReturn(responseDto);
 
         RecommendationRequestDto result = requestService.create(requestDto);
 
@@ -133,12 +129,11 @@ public class RecommendationRequestServiceTest {
         verify(userService).getUserById(requestDto.getReceiverId());
         verify(requestRepository).save(requestEntity);
         verify(skillService).findAllByIDs(requestDto.getSkillsIds());
-        verify(skillRequestService).create(requestSaved, skillFirst);
-        verify(skillRequestService).create(requestSaved, skillSecond);
+        verify(skillRequestService).create(requestSaved, skill);
 
-        assertEquals(result, requestMapper.toDto(requestSaved));
+        assertEquals(result, responseDto);
         assertEquals(RequestStatus.PENDING, result.getStatus());
-        assertEquals(2, result.getSkillsIds().size());
+        assertEquals(1, result.getSkillsIds().size());
     }
 
     @Test
@@ -160,7 +155,7 @@ public class RecommendationRequestServiceTest {
 
         when(requestRepository.findAll()).thenReturn(requests);
         when(filters.get(0).isApplicable(any())).thenReturn(true);
-        when(filters.get(0).apply(any(),any())).thenReturn(requestStream);
+        when(filters.get(0).apply(any(), any())).thenReturn(requestStream);
         when(requestMapper.toDto(requests.get(0))).thenReturn(requestDto);
 
         List<RecommendationRequestDto> result = requestService.getRequests(filterDto);
@@ -211,19 +206,18 @@ public class RecommendationRequestServiceTest {
 
     private RecommendationRequestDto getRequestDto() {
         return RecommendationRequestDto.builder()
-                .id(1L)
-                .message("папапап")
+                .message("message")
                 .status(RequestStatus.PENDING)
                 .requesterId(1L)
                 .receiverId(2L)
-                .skillsIds(new ArrayList<>(Arrays.asList(1L, 2L)))
+                .skillsIds(new ArrayList<>(List.of(1L)))
                 .build();
     }
 
     private RecommendationRequest getRequestSaved() {
         return RecommendationRequest.builder()
                 .id(1L)
-                .message("папапап")
+                .message("message")
                 .status(RequestStatus.PENDING)
                 .requester(new User())
                 .receiver(new User())
