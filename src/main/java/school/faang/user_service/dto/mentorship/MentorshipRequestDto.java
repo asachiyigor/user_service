@@ -1,5 +1,6 @@
 package school.faang.user_service.dto.mentorship;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +14,7 @@ import school.faang.user_service.entity.mentorship.RequestStatus;
 public class MentorshipRequestDto {
 
   private Long id;
+  @NotBlank
   private String description;
   private Long requesterId;
   private Long receiverId;

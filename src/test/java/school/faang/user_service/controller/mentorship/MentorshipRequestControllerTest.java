@@ -1,6 +1,5 @@
 package school.faang.user_service.controller.mentorship;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
 import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
-import school.faang.user_service.exception.mentorship.DataValidationException;
 import school.faang.user_service.service.mentorship.MentorshipRequestService;
 
 @WebMvcTest
@@ -50,7 +48,7 @@ public class MentorshipRequestControllerTest {
 
     when(mentorshipRequestService.rejectRequest(1L, rejectionDto)).thenReturn(expectedResponse);
 
-    mockMvc.perform(post(MentorshipRequestUrl.URL_REJECT.getUrl(), 1L)
+    mockMvc.perform(post(MentorshipRequestUrl.URL_REJECT.url, 1L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(OBJECT_MAPPER.writeValueAsString(rejectionDto)))
         .andExpect(content().json(OBJECT_MAPPER.writeValueAsString(expectedResponse)))
@@ -68,7 +66,7 @@ public class MentorshipRequestControllerTest {
 
     when(mentorshipRequestService.acceptRequest(1L)).thenReturn(expectedResponse);
 
-    mockMvc.perform(post(MentorshipRequestUrl.URL_ACCEPT.getUrl(), 1L))
+    mockMvc.perform(post(MentorshipRequestUrl.URL_ACCEPT.url, 1L))
         .andExpect(content().json(OBJECT_MAPPER.writeValueAsString(expectedResponse)))
         .andExpect(status().isOk());
     verify(mentorshipRequestService, Mockito.times(1)).acceptRequest(1L);
@@ -88,7 +86,7 @@ public class MentorshipRequestControllerTest {
     when(mentorshipRequestService.requestMentorship(mentorshipRequest)).thenReturn(
         expectedResponse);
 
-    mockMvc.perform(post(MentorshipRequestUrl.URL_ADD.getUrl())
+    mockMvc.perform(post(MentorshipRequestUrl.URL_ADD.url)
             .contentType(MediaType.APPLICATION_JSON)
             .content(OBJECT_MAPPER.writeValueAsString(mentorshipRequest)))
         .andExpect(content().json(OBJECT_MAPPER.writeValueAsString(expectedResponse)))
@@ -97,20 +95,18 @@ public class MentorshipRequestControllerTest {
   }
 
   @Test
-  @DisplayName("Should throw exception * doesn't work")
+  @DisplayName("Should return bad request with empty description")
   void testNegativeRequestMentorship() throws Exception {
     MentorshipRequestDto mentorshipRequest = MentorshipRequestDto.builder()
         .requesterId(1L)
         .receiverId(2L)
         .description("")
         .build();
-    when(mentorshipRequestService.requestMentorship(mentorshipRequest)).thenThrow(new DataValidationException("mock"));
-//    mockMvc.perform(post(MentorshipRequestUrl.URL_ADD.getUrl())
-//            .contentType(MediaType.APPLICATION_JSON)
-//            .content(OBJECT_MAPPER.writeValueAsString(mentorshipRequest)))
-//        .andExpect(status().isBadRequest());
-    assertThrows(DataValidationException.class, () -> mentorshipRequestService.requestMentorship(mentorshipRequest));
-    verify(mentorshipRequestService, Mockito.times(1)).requestMentorship(mentorshipRequest);
+
+    mockMvc.perform(post(MentorshipRequestUrl.URL_ADD.url)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(OBJECT_MAPPER.writeValueAsString(mentorshipRequest)))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -131,7 +127,7 @@ public class MentorshipRequestControllerTest {
         .description("test")
         .build();
     when(mentorshipRequestService.getRequests(filterDto)).thenReturn(requestDtos);
-    mockMvc.perform(get(MentorshipRequestUrl.URL_LIST.getUrl())
+    mockMvc.perform(get(MentorshipRequestUrl.URL_LIST.url)
             .contentType(MediaType.APPLICATION_JSON)
             .content(OBJECT_MAPPER.writeValueAsString(filterDto)))
         .andExpect(content().json(OBJECT_MAPPER.writeValueAsString(requestDtos)))

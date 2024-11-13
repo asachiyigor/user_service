@@ -1,9 +1,9 @@
 package school.faang.user_service.controller.mentorship;
 
 
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,13 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 import school.faang.user_service.dto.mentorship.MentorshipRequestDto;
 import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
-import school.faang.user_service.exception.mentorship.DataValidationException;
 import school.faang.user_service.service.mentorship.MentorshipRequestService;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/mentorship")
-@Validated
 public class MentorshipRequestController {
 
   private final MentorshipRequestService mentorshipRequestService;
@@ -36,9 +34,9 @@ public class MentorshipRequestController {
   }
 
   @PostMapping("/add")
-  public MentorshipRequestDto requestMentorship(
+  public MentorshipRequestDto requestMentorship(@Valid
       @RequestBody MentorshipRequestDto mentorshipRequestDto) {
-    validateMentorshipRequest(mentorshipRequestDto);
+//    validateMentorshipRequest(mentorshipRequestDto);
     return mentorshipRequestService.requestMentorship(mentorshipRequestDto);
   }
 
@@ -48,9 +46,4 @@ public class MentorshipRequestController {
     return mentorshipRequestService.getRequests(requestFilterDto);
   }
 
-  private void validateMentorshipRequest(MentorshipRequestDto mentorshipRequestDto) {
-    if (mentorshipRequestDto.getDescription() == null || mentorshipRequestDto.getDescription().isEmpty()) {
-      throw new DataValidationException("Please write why you need mentor");
-    }
-  }
 }
