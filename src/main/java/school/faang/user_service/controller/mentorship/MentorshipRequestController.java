@@ -1,7 +1,9 @@
 package school.faang.user_service.controller.mentorship;
 
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +19,7 @@ import school.faang.user_service.service.mentorship.MentorshipRequestService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/mentorship")
+@Validated
 public class MentorshipRequestController {
 
   private final MentorshipRequestService mentorshipRequestService;
@@ -46,7 +49,7 @@ public class MentorshipRequestController {
   }
 
   private void validateMentorshipRequest(MentorshipRequestDto mentorshipRequestDto) {
-    if (mentorshipRequestDto.getDescription().isEmpty()) {
+    if (mentorshipRequestDto.getDescription() == null || mentorshipRequestDto.getDescription().isEmpty()) {
       throw new DataValidationException("Please write why you need mentor");
     }
   }
