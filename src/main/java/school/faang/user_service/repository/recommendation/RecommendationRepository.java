@@ -26,6 +26,13 @@ public interface RecommendationRepository extends CrudRepository<Recommendation,
     @Modifying
     void update(long authorId, long receiverId, String content);
 
+    @Query(nativeQuery = true, value = """
+            UPDATE recommendation SET content = :content, updated_at = now()
+            WHERE id = :id AND author_id = :authorId AND receiver_id = :receiverId
+            """)
+    @Modifying
+    void update(long id, long authorId, long receiverId, String content);
+
     Page<Recommendation> findAllByReceiverId(long receiverId, Pageable pageable);
 
     Page<Recommendation> findAllByAuthorId(long authorId, Pageable pageable);
