@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.User;
 
 @Data
@@ -36,7 +37,7 @@ public class MentorshipRequest {
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.ORDINAL)
-    private User.RequestStatus status;
+    private RequestStatus status;
 
     @Column(name = "rejection_reason", length = 4096)
     private String rejectionReason;

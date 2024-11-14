@@ -36,7 +36,6 @@ public class MentorshipRequestController {
   @PostMapping("/add")
   public MentorshipRequestDto requestMentorship(@Valid
       @RequestBody MentorshipRequestDto mentorshipRequestDto) {
-//    validateMentorshipRequest(mentorshipRequestDto);
     return mentorshipRequestService.requestMentorship(mentorshipRequestDto);
   }
 
