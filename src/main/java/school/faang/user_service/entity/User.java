@@ -143,4 +143,10 @@ public class User {
 
     @OneToOne(mappedBy = "user")
     private Premium premium;
+
+  public enum RequestStatus {
+      PENDING,
+      ACCEPTED,
+      REJECTED
+  }
 }
