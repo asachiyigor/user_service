@@ -12,7 +12,7 @@ import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
 import school.faang.user_service.entity.mentorship.MentorshipRequest;
 import school.faang.user_service.entity.mentorship.RequestError;
-import school.faang.user_service.entity.mentorship.RequestStatus;
+import school.faang.user_service.entity.User.RequestStatus;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.exception.mentorship.DataValidationException;
 import school.faang.user_service.mapper.mentorship.MentorshipRequestMapper;
