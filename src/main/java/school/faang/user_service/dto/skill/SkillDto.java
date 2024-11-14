@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 @Builder
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SkillDto {
