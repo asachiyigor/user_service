@@ -1,4 +1,3 @@
-
 package school.faang.user_service.service.user;
 
 import lombok.RequiredArgsConstructor;
@@ -8,6 +7,7 @@ import school.faang.user_service.dto.UserDto;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.exception.ErrorMessage;
 import school.faang.user_service.exception.UserNotFoundException;
+import school.faang.user_service.exception.UserSaveException;
 import school.faang.user_service.mapper.UserMapper;
 import school.faang.user_service.repository.UserRepository;
 
@@ -29,7 +29,7 @@ public class UserService {
             return user.get();
         } else {
             log.error("User with id: {} not found", id);
-            throw new RuntimeException("User id:" + id + " not found");
+            throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, id));
         }
     }
 
@@ -63,7 +63,7 @@ public class UserService {
             userRepository.save(user);
         } catch (Exception e) {
             log.error("Error saving user: {}", user, e);
-            throw new RuntimeException(String.format(ErrorMessage.USER_SAVE_ERROR, user), e);
+            throw new UserSaveException(String.format(ErrorMessage.USER_SAVE_ERROR, user));
         }
     }
 
