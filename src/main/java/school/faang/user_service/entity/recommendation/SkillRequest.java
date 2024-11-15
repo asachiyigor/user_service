@@ -24,4 +24,9 @@ public class SkillRequest {
     @ManyToOne
     @JoinColumn(name = "skill_id", nullable = false)
     private Skill skill;
+
+    public SkillRequest(RecommendationRequest request, Skill skill) {
+        this.request = request;
+        this.skill = skill;
+    }
 }
