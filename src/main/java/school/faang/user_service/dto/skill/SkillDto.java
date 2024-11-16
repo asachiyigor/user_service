@@ -8,12 +8,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class SkillDto {
     private Long id;
-
     @NotNull(message = "Title не может быть null")
     @NotEmpty
     private String title;
