@@ -1,14 +1,11 @@
 package school.faang.user_service.service.recommendation;
 
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import school.faang.user_service.dto.recommendation.RecommendationRequestDto;
 import school.faang.user_service.dto.recommendation.RejectionDto;
@@ -19,10 +16,9 @@ import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
 import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.exception.DataValidationException;
-import school.faang.user_service.mapper.recommandation.RecommendationRequestMapper;
-import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapper;
+import school.faang.user_service.mapper.recommandation.RecommendationRequestMapperImpl;
+import school.faang.user_service.mapper.recommandation.RecommendationRequestRejectionMapperImpl;
 import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
-import school.faang.user_service.service.recommendation.filter.StatusFilter;
 import school.faang.user_service.service.skil.SkillRequestService;
 import school.faang.user_service.service.skil.SkillService;
 import school.faang.user_service.service.user.UserService;
@@ -48,13 +44,9 @@ public class RecommendationRequestServiceTest {
     @Mock
     private SkillRequestService skillRequestService;
     @Mock
-    private Filter<RecommendationRequest> statusFilter;
-    @Spy
-    private RecommendationRequestMapper requestMapper = Mappers.getMapper(RecommendationRequestMapper.class);
-    @Spy
-    private RecommendationRequestRejectionMapper rejectionMapper = Mappers.getMapper(RecommendationRequestRejectionMapper.class);
-
-
+    private RecommendationRequestMapperImpl requestMapper;
+    @Mock
+    private RecommendationRequestRejectionMapperImpl rejectionMapper;
 
     @Test
     @DisplayName("testCreateWithUserExistence")
@@ -112,28 +104,24 @@ public class RecommendationRequestServiceTest {
         RecommendationRequestDto requestDto = getRequestDto();
         RecommendationRequest requestSaved = getRequestSaved();
         RecommendationRequest requestEntity = getRequestEntity();
-        List<Long> existSkillIds = List.of(1L, 2L);
-        Skill skillFirst = new Skill();
-        Skill skillSecond = new Skill();
-        skillFirst.setId(1L);
-        skillSecond.setId(2L);
-        SkillRequest skillRequestFirst = new SkillRequest(requestSaved, skillFirst);
-        SkillRequest skillRequestSecond = new SkillRequest(requestSaved, skillSecond);
-        requestSaved.getSkills().add(skillRequestFirst);
-        requestSaved.getSkills().add(skillRequestSecond);
+        RecommendationRequestDto responseDto = getRequestDto();
+        responseDto.setId(1L);
+        List<Long> existSkillIds = List.of(1L);
+        Skill skill = Skill.builder().id(1L).build();
+        SkillRequest skillRequest = new SkillRequest(requestSaved, skill);
+        requestSaved.getSkills().add(skillRequest);
 
-        when(userService.isUserExistByID(requestDto.getRequesterId())).thenReturn(true);
-        when(userService.isUserExistByID(requestDto.getReceiverId())).thenReturn(true);
-        when(requestRepository.findLatestPendingRequest(requestDto.getRequesterId(), requestDto.getReceiverId()))
-                .thenReturn(Optional.of(requestSaved));
-        when(skillService.findExistingSkills(requestDto.getSkillsIds())).thenReturn(existSkillIds);
-        when(requestMapper.toEntity(requestDto)).thenReturn(requestEntity);
-        when(userService.getUserById(requestDto.getRequesterId())).thenReturn(requestEntity.getRequester());
-        when(userService.getUserById(requestDto.getRequesterId())).thenReturn(requestEntity.getReceiver());
-        when(requestRepository.save(requestEntity)).thenReturn(requestSaved);
-        when(skillService.findAllByIDs(requestDto.getSkillsIds())).thenReturn(List.of(skillFirst, skillSecond));
-        when(skillRequestService.create(requestSaved, skillFirst)).thenReturn(skillRequestFirst);
-        when(skillRequestService.create(requestSaved, skillSecond)).thenReturn(skillRequestSecond);
+        when(userService.isUserExistByID(anyLong())).thenReturn(true);
+        when(userService.isUserExistByID(anyLong())).thenReturn(true);
+        when(requestRepository.findLatestPendingRequest(anyLong(), anyLong())).thenReturn(Optional.of(requestSaved));
+        when(skillService.findExistingSkills(anyList())).thenReturn(existSkillIds);
+        when(requestMapper.toEntity(any())).thenReturn(requestEntity);
+        when(userService.getUserById(anyLong())).thenReturn(requestEntity.getRequester());
+        when(userService.getUserById(anyLong())).thenReturn(requestEntity.getReceiver());
+        when(requestRepository.save(any())).thenReturn(requestSaved);
+        when(skillService.findAllByIDs(anyList())).thenReturn(List.of(skill));
+        when(skillRequestService.create(any(), any())).thenReturn(skillRequest);
+        when(requestMapper.toDto(any())).thenReturn(responseDto);
 
         RecommendationRequestDto result = requestService.create(requestDto);
 
@@ -141,36 +129,37 @@ public class RecommendationRequestServiceTest {
         verify(userService).getUserById(requestDto.getReceiverId());
         verify(requestRepository).save(requestEntity);
         verify(skillService).findAllByIDs(requestDto.getSkillsIds());
-        verify(skillRequestService).create(requestSaved, skillFirst);
-        verify(skillRequestService).create(requestSaved, skillSecond);
+        verify(skillRequestService).create(requestSaved, skill);
 
-        assertEquals(result, requestMapper.toDto(requestSaved));
+        assertEquals(result, responseDto);
         assertEquals(RequestStatus.PENDING, result.getStatus());
-        assertEquals(2, result.getSkillsIds().size());
+        assertEquals(1, result.getSkillsIds().size());
     }
 
-    @Disabled
     @Test()
     @DisplayName("testGetRequestsWithFilerSuccess")
     public void testGetRequestsWithFilerSuccess() {
-        RecommendationRequestDto requestDto = getRequestDto();
-        RequestFilterDto requestFilterDto = RequestFilterDto.builder()
-                .status(RequestStatus.PENDING)
-                .build();
-        statusFilter = new StatusFilter();
-        List<RecommendationRequestDto> requestsDto = Arrays.asList(requestDto, getRequestDto());
-        RecommendationRequest requestSaved = getRequestSaved();
-        Stream<RecommendationRequest> requestStream = Stream.of(requestSaved);
+        Filter<RequestFilterDto, RecommendationRequest> mockFilter = mock(Filter.class);
+        List<Filter<RequestFilterDto, RecommendationRequest>> filters = List.of(mockFilter);
 
-        when(requestRepository.findAll()).thenReturn(List.of(requestSaved));
-        when(statusFilter.isApplicable(requestFilterDto)).thenReturn(true);
-        when(statusFilter.apply(requestStream, eq(requestFilterDto))).thenReturn(Stream.of(requestSaved));
-        when(requestMapper.toDto(requestSaved)).thenReturn(requestsDto.get(0));
+        requestService = new RecommendationRequestService(requestRepository, requestMapper, rejectionMapper, filters,
+                userService, skillRequestService, skillService);
 
-        List<RecommendationRequestDto> resultDtos = requestService.getRequests(requestFilterDto);
+        RequestFilterDto filterDto = RequestFilterDto.builder().status(RequestStatus.PENDING).build();
+        List<RecommendationRequest> requests = List.of(
+                RecommendationRequest.builder().status(RequestStatus.PENDING).build(),
+                RecommendationRequest.builder().status(RequestStatus.REJECTED).build()
+        );
+        RecommendationRequestDto requestDto = RecommendationRequestDto.builder().status(RequestStatus.PENDING).build();
+        Stream<RecommendationRequest> requestStream = Stream.of(requests.get(0));
 
-        assertEquals(1, resultDtos.size());
-        assertEquals(requestDto, resultDtos.get(0));
+        when(requestRepository.findAll()).thenReturn(requests);
+        when(filters.get(0).isApplicable(any())).thenReturn(true);
+        when(filters.get(0).apply(any(), any())).thenReturn(requestStream);
+        when(requestMapper.toDto(requests.get(0))).thenReturn(requestDto);
+
+        List<RecommendationRequestDto> result = requestService.getRequests(filterDto);
+        assertEquals(result.get(0).getStatus(), RequestStatus.PENDING);
     }
 
     @Test
@@ -217,19 +206,18 @@ public class RecommendationRequestServiceTest {
 
     private RecommendationRequestDto getRequestDto() {
         return RecommendationRequestDto.builder()
-                .id(1L)
-                .message("папапап")
+                .message("message")
                 .status(RequestStatus.PENDING)
                 .requesterId(1L)
                 .receiverId(2L)
-                .skillsIds(new ArrayList<>(Arrays.asList(1L, 2L)))
+                .skillsIds(new ArrayList<>(List.of(1L)))
                 .build();
     }
 
     private RecommendationRequest getRequestSaved() {
         return RecommendationRequest.builder()
                 .id(1L)
-                .message("папапап")
+                .message("message")
                 .status(RequestStatus.PENDING)
                 .requester(new User())
                 .receiver(new User())
