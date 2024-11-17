@@ -1,11 +1,8 @@
 package school.faang.user_service.exception;
 
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,7 +11,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @ControllerAdvice
@@ -32,13 +28,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
         log.error("IllegalArgumentException occurred: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException ex) {
-        log.error("ConstraintViolationException occurred: Invalid input: {}", ex.getMessage());
-        return ResponseEntity.badRequest().body("Invalid input: " + ex.getMessage());
     }
 
     @ResponseBody
@@ -65,27 +54,5 @@ public class GlobalExceptionHandler {
                 .toList();
         log.error(violations.toString());
         return new ValidationErrorResponse(violations);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({DataValidationException.class,
-            InvalidFormatException.class,
-            DataIntegrityViolationException.class,
-            org.springframework.http.converter.HttpMessageNotReadableException.class})
-    public ResponseEntity<ErrorResponse> handleExceptions(Exception ex, HttpServletRequest request) {
-        String errorMessage = ex.getMessage();
-        log.error(ex.getClass() + ": " + errorMessage);
-        ErrorResponse errorResponse = getErrorResponse(request, HttpStatus.BAD_REQUEST, errorMessage);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
-
-    private static ErrorResponse getErrorResponse(HttpServletRequest request, HttpStatus status, String errorMessage) {
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setTimestamp(LocalDateTime.now());
-        errorResponse.setStatus(status.value());
-        errorResponse.setError(status.getReasonPhrase());
-        errorResponse.setMessage(errorMessage);
-        errorResponse.setPath(request.getRequestURI());
-        return errorResponse;
     }
 }

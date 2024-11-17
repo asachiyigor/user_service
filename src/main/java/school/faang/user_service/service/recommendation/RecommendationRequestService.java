@@ -41,7 +41,7 @@ public class RecommendationRequestService {
     private final RecommendationRequestRepository requestRepository;
     private final RecommendationRequestMapper requestMapper;
     private final RecommendationRequestRejectionMapper requestRejectionMapper;
-    private final List<Filter<RecommendationRequest>> filters;
+    private final List<Filter<RequestFilterDto, RecommendationRequest>> filters;
     private final UserService userService;
     private final SkillRequestService skillRequestService;
     private final SkillService skillService;
@@ -70,12 +70,9 @@ public class RecommendationRequestService {
 
     public List<RecommendationRequestDto> getRequests(@NotNull RequestFilterDto filterDto) {
         Stream<RecommendationRequest> requestStream = requestRepository.findAll().stream();
-        for (Filter<RecommendationRequest> filter : filters) {
-            if (filter.isApplicable(filterDto)) {
-                requestStream = filter.apply(requestStream, filterDto);
-            }
-        }
-        return requestStream
+        return filters.stream()
+                .filter(filter -> filter.isApplicable(filterDto))
+                .flatMap(filter -> filter.apply(requestStream, filterDto))
                 .distinct()
                 .map(requestMapper::toDto)
                 .toList();
