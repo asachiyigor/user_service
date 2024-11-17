@@ -9,7 +9,7 @@ import school.faang.user_service.service.recommendation.Filter;
 import java.util.stream.Stream;
 
 @Component
-public class StatusFilter implements Filter<RecommendationRequest> {
+public class StatusFilter implements Filter<RequestFilterDto, RecommendationRequest> {
     @Override
     public boolean isApplicable(@NotNull RequestFilterDto filterDto) {
         return filterDto.getStatus() != null;
