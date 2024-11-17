@@ -1,7 +1,6 @@
 package school.faang.user_service.service.recommendation;
 
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -137,7 +136,6 @@ public class RecommendationRequestServiceTest {
         assertEquals(1, result.getSkillsIds().size());
     }
 
-    @Disabled
     @Test()
     @DisplayName("testGetRequestsWithFilerSuccess")
     public void testGetRequestsWithFilerSuccess() {
