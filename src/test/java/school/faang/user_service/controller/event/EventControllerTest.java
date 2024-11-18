@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import school.faang.user_service.config.context.UserContext;
 import school.faang.user_service.dto.event.EventDto;
 import school.faang.user_service.dto.event.EventFilterDto;
 import school.faang.user_service.dto.skill.SkillDto;
@@ -22,13 +23,15 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
 @AutoConfigureMockMvc
 @WebMvcTest(EventController.class)
 public class EventControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private UserContext userContext;
 
     @MockBean
     private EventService eventService;
