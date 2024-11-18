@@ -1,8 +1,7 @@
 package school.faang.user_service.controller.mentorship;
 
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,8 +14,11 @@ import school.faang.user_service.dto.mentorship.RejectionDto;
 import school.faang.user_service.dto.mentorship.RequestFilterDto;
 import school.faang.user_service.service.mentorship.MentorshipRequestService;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Mentorship Request API", description = "API for managing requests for mentorship")
 @RequestMapping("/mentorship")
 public class MentorshipRequestController {
 
