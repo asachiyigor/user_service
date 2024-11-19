@@ -1,5 +1,6 @@
 package school.faang.user_service.controller.recommendation;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Recommendation Request API", description = "API for managing recommendation requests")
 @RequestMapping("/api/user-service/recommendation-requests")
 @Validated
 public class RecommendationRequestController {

@@ -1,9 +1,9 @@
 package school.faang.user_service.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import school.faang.user_service.dto.skill.SkillCandidateDto;
 import school.faang.user_service.dto.skill.SkillDto;
@@ -14,6 +14,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
+@Tag(name = "Skill API", description = "API for managing slills")
 @RequestMapping("/skills")
 public class SkillController {
     private final SkillService skillService;
@@ -34,9 +35,9 @@ public class SkillController {
     }
 
     @GetMapping("/{id}")
-    public List<SkillOffer> acquireSkillFromOffers(@PathVariable @NotNull long skillId,
+    public List<SkillOffer> acquireSkillFromOffers(@PathVariable("id") @NotNull long skillId,
                                                    @RequestParam @NotNull long userId) {
-        return acquireSkillFromOffers(skillId, userId);
+        return skillService.acquireSkillFromOffers(skillId, userId);
     }
 }
 
