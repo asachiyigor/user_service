@@ -98,9 +98,8 @@ public class S3ServiceImplTest {
     void testDownloadFileThrowsException() {
         when(s3Client.getObject(anyString(), anyString())).thenThrow(new RuntimeException("S3 error"));
 
-        FileException exception = assertThrows(FileException.class, () -> {
-            s3Service.downloadFile("testKey");
-        });
+        FileException exception = assertThrows(FileException.class,
+                () -> s3Service.downloadFile("testKey"));
         verify(s3Client, times(1)).getObject(bucketName, "testKey");
         assertEquals("Error occurred while dealing with file: testKey", exception.getMessage());
     }
@@ -109,7 +108,7 @@ public class S3ServiceImplTest {
     void testValidateLargeFile() {
         MultipartFile largeFile = new MockMultipartFile("file",
                 "test.jpg",
-                "image/jpeg", new byte[(int) (5 * 1024 * 1024) + 1]);
+                "image/jpeg", new byte[(5 * 1024 * 1024) + 1]);
 
         FileException exception = assertThrows(FileException.class, () -> s3Service.uploadFile(largeFile, "foder"));
         assertEquals("File size exceeds the maximum allowed size of 5MB.", exception.getMessage());

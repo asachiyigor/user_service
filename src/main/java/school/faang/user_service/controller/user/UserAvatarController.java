@@ -47,7 +47,7 @@ public class UserAvatarController {
     )
     @GetMapping("/{id}/avatar/{size}")
     public ResponseEntity<byte[]> getAvatar(@PathVariable Long id, @PathVariable AvatarSize size) {
-        try (InputStream inputStream = userAvatarService.getAvatar(id, size);) {
+        try (InputStream inputStream = userAvatarService.getAvatar(id, size)) {
             byte[] avatarContent = inputStream.readAllBytes();
 
             return ResponseEntity.ok()
