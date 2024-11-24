@@ -1,5 +1,6 @@
 package school.faang.user_service.controller.goal;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @Validated
 @RestController
+@Tag(name = "Goal Invitation API", description = "API for managing goal invitations")
 @RequestMapping("/goal-invitations")
 @RequiredArgsConstructor
 public class GoalInvitationController {

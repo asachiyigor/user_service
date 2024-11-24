@@ -40,3 +40,9 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
+
+api-docs:
+  enabled: true
+swagger-ui:
+  enabled: true
+  path: /swagger-ui.html

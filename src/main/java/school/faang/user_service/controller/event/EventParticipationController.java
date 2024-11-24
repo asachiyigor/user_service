@@ -1,5 +1,6 @@
 package school.faang.user_service.controller.event;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Validated
 @RestController
+@Tag(name = "Event Participation API", description = "API for managing event participation")
 @RequiredArgsConstructor
 @RequestMapping("/events")
 public class EventParticipationController {

@@ -1,5 +1,6 @@
 package school.faang.user_service.controller.event;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
+@Tag(name = "Event API", description = "API for managing events")
 @RequestMapping("/api/events")
 public class EventController {
 
