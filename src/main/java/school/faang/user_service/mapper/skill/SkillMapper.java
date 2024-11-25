@@ -1,4 +1,4 @@
-package school.faang.user_service.mapper;
+package school.faang.user_service.mapper.skill;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -27,5 +27,3 @@ public interface SkillMapper {
         return skillsList.stream().map(this::candidateToDto).toList();
     }
 }
-
-
