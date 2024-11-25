@@ -1,4 +1,4 @@
-package school.faang.user_service.controller;
+package school.faang.user_service.controller.skill;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -40,5 +40,3 @@ public class SkillController {
         return skillService.acquireSkillFromOffers(skillId, userId);
     }
 }
-
-

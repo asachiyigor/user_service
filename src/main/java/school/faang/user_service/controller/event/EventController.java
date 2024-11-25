@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @Tag(name = "Event API", description = "API for managing events")
-@RequestMapping("/api/events")
+@RequestMapping("/api/v1/events")
 public class EventController {
 
     private final EventService eventService;

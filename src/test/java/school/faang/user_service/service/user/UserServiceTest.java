@@ -8,11 +8,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import school.faang.user_service.dto.UserDto;
+import school.faang.user_service.dto.user.UserDto;
 import school.faang.user_service.entity.User;
+import school.faang.user_service.entity.event.Event;
 import school.faang.user_service.exception.ErrorMessage;
 import school.faang.user_service.exception.UserNotFoundException;
-import school.faang.user_service.mapper.UserMapper;
+import school.faang.user_service.mapper.user.UserMapper;
 import school.faang.user_service.repository.UserRepository;
 
 import java.util.Collections;
@@ -42,6 +43,7 @@ class UserServiceTest {
         User user = User.builder()
                 .id(userId)
                 .username("username")
+                .participatedEvents(List.of(new Event(), new Event()))
                 .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -70,8 +72,8 @@ class UserServiceTest {
     @DisplayName("Get users by IDs successfully")
     void getUsersIdsTest() {
         List<Long> userIds = List.of(1L, 2L);
-        User user1 = User.builder().id(1L).build();
-        User user2 = User.builder().id(2L).build();
+        User user1 = User.builder().id(1L).participatedEvents(List.of(new Event(), new Event())).build();
+        User user2 = User.builder().id(2L).participatedEvents(List.of(new Event(), new Event())).build();
         when(userRepository.findAllById(userIds)).thenReturn(List.of(user1, user2));
         List<UserDto> result = userService.getUsersByIds(userIds);
         assertNotNull(result);
