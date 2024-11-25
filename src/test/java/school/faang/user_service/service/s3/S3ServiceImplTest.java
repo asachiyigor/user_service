@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -75,6 +76,27 @@ public class S3ServiceImplTest {
     }
 
     @Test
+    void testUploadFileExceedsSizeLimit() {
+        MultipartFile largeFile = new MockMultipartFile("file",
+                "test.jpg",
+                "image/jpeg", new byte[(5 * 1024 * 1024) + 1]);
+
+        FileException exception = assertThrows(FileException.class, () -> s3Service.uploadFile(largeFile, "foder"));
+        assertEquals("File size exceeds the maximum allowed size of 5MB.", exception.getMessage());
+    }
+
+    @Test
+    void testUploadFileUnsupportedFormat() {
+        MockMultipartFile gifFile = new MockMultipartFile("file",
+                "test.txt",
+                "text/plain",
+                "not an image".getBytes());
+
+        FileException exception = assertThrows(FileException.class, () -> s3Service.uploadFile(gifFile, "folder"));
+        assertEquals("The uploaded file is not a valid image.", exception.getMessage());
+    }
+
+    @Test
     void testDeleteFile() {
         doNothing().when(s3Client).deleteObject(bucketName, "testKey");
         s3Service.deleteFile("testKey");
@@ -105,23 +127,32 @@ public class S3ServiceImplTest {
     }
 
     @Test
-    void testValidateLargeFile() {
+    void testValidateFileSizeExceedsLimit() {
         MultipartFile largeFile = new MockMultipartFile("file",
                 "test.jpg",
                 "image/jpeg", new byte[(5 * 1024 * 1024) + 1]);
 
-        FileException exception = assertThrows(FileException.class, () -> s3Service.uploadFile(largeFile, "foder"));
+        FileException exception = assertThrows(FileException.class, () -> s3Service.validateFile(largeFile));
         assertEquals("File size exceeds the maximum allowed size of 5MB.", exception.getMessage());
     }
 
     @Test
-    void testUploadFileUnsupportedFormat() {
-        MockMultipartFile gifFile = new MockMultipartFile("file",
-                "test.txt",
-                "text/plain",
-                "not an image".getBytes());
+    public void testValidateFileNotAnImage() throws IOException {
+        MultipartFile mockFile = Mockito.mock(MultipartFile.class);
+        when(mockFile.getSize()).thenReturn(10L);
+        when(mockFile.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
 
-        FileException exception = assertThrows(FileException.class, () -> s3Service.uploadFile(gifFile, "folder"));
-        assertEquals("The uploaded file is not a valid image.", exception.getMessage());
+        Exception exception = assertThrows(FileException.class, () -> s3Service.validateFile(mockFile));
+        assert exception.getMessage().contains("The uploaded file is not a valid image.");
+    }
+
+    @Test
+    public void testErrorReadingFile() throws IOException {
+        MultipartFile mockFile = Mockito.mock(MultipartFile.class);
+        when(mockFile.getSize()).thenReturn(10L);
+        when(mockFile.getInputStream()).thenThrow(new IOException("IO error"));
+
+        Exception exception = assertThrows(FileException.class, () -> s3Service.validateFile(mockFile));
+        assert exception.getMessage().contains("Error reading the file. Ensure it is a valid image.");
     }
 }

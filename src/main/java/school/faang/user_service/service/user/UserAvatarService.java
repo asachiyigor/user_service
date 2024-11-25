@@ -25,6 +25,7 @@ public class UserAvatarService {
     public s3ResponseKey addAvatar(Long id, MultipartFile file) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new DataValidationException("User not found. User id: " + id));
+        s3Service.validateFile(file);
 
         UserProfilePic userProfilePicExisting = user.getUserProfilePic();
         if (userProfilePicExisting != null) {

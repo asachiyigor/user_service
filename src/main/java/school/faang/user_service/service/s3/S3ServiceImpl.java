@@ -73,7 +73,7 @@ public class S3ServiceImpl implements S3Service {
         }
     }
 
-    private void validateFile(MultipartFile file) {
+    public void validateFile(MultipartFile file) {
         if (file.getSize() > MAX_FILE_SIZE_MB) {
             throw new FileException("File size exceeds the maximum allowed size of 5MB.");
         }
