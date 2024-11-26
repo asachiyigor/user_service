@@ -8,7 +8,7 @@ import school.faang.user_service.dto.skill.SkillDto;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.event.Event;
 import school.faang.user_service.exception.DataValidationException;
-import school.faang.user_service.mapper.EventMapper;
+import school.faang.user_service.mapper.event.EventMapper;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.event.EventRepository;
 import school.faang.user_service.entity.Skill;

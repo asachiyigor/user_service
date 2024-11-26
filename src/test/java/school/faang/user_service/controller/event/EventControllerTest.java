@@ -61,7 +61,7 @@ public class EventControllerTest {
         EventDto eventDto = createValidEventDto();
         when(eventService.getEvent(1L)).thenReturn(eventDto);
 
-        mockMvc.perform(get("/api/events/1"))
+        mockMvc.perform(get("/api/v1/events/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(eventDto.getId()))
                 .andExpect(jsonPath("$.title").value(eventDto.getTitle()));
@@ -78,7 +78,7 @@ public class EventControllerTest {
 
         when(eventService.getEventsByFilter(any(EventFilterDto.class))).thenReturn(filteredEvents);
 
-        mockMvc.perform(get("/api/events/filter")
+        mockMvc.perform(get("/api/v1/events/filter")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(filterDto)))
                 .andExpect(status().isOk())
@@ -93,7 +93,7 @@ public class EventControllerTest {
     public void deleteEvent_ExistingId_ReturnsNoContent() throws Exception {
         doNothing().when(eventService).deleteEvent(1L);
 
-        mockMvc.perform(delete("/api/events/1"))
+        mockMvc.perform(delete("/api/v1/events/1"))
                 .andExpect(status().isOk());
 
         verify(eventService).deleteEvent(1L);
@@ -105,7 +105,7 @@ public class EventControllerTest {
         List<EventDto> ownedEvents = List.of(createValidEventDto());
         when(eventService.getOwnedEvents(1L)).thenReturn(ownedEvents);
 
-        mockMvc.perform(get("/api/events/owned/1"))
+        mockMvc.perform(get("/api/v1/events/owned/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(ownedEvents.get(0).getId()))
                 .andExpect(jsonPath("$[0].title").value(ownedEvents.get(0).getTitle()));
@@ -119,7 +119,7 @@ public class EventControllerTest {
         List<EventDto> participatedEvents = List.of(createValidEventDto());
         when(eventService.getParticipatedEvents(1L)).thenReturn(participatedEvents);
 
-        mockMvc.perform(get("/api/events/participated/1"))
+        mockMvc.perform(get("/api/v1/events/participated/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(participatedEvents.get(0).getId()))
                 .andExpect(jsonPath("$[0].title").value(participatedEvents.get(0).getTitle()));

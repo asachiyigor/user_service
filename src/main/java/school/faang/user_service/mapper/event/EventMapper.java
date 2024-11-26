@@ -1,4 +1,4 @@
-package school.faang.user_service.mapper;
+package school.faang.user_service.mapper.event;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -11,5 +11,7 @@ public interface EventMapper {
 
     @Mapping(source = "owner.id", target = "ownerId")
     EventDto toDto(Event event);
+
+    @Mapping(source = "ownerId", target = "owner.id")
     Event toEntity(EventDto eventDto);
 }
