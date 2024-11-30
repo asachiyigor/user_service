@@ -7,10 +7,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import school.faang.user_service.dto.user.UserDto;
+import school.faang.user_service.dto.user.UserResponseCsvDto;
+import school.faang.user_service.exception.ReadFileException;
 import school.faang.user_service.service.user.UserService;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,5 +34,15 @@ public class UserController {
     @PostMapping("/users")
     List<UserDto> getUsersByIds(@RequestBody List<Long> ids) {
         return userService.getUsersByIds(ids);
+    }
+
+    @PostMapping("/CSV")
+    public List<UserResponseCsvDto> getUsersFromCsv(@RequestParam MultipartFile file) {
+        try {
+            InputStream inputStream = file.getInputStream();
+            return userService.readingUsersFromCsv(inputStream);
+        } catch (IOException e) {
+            throw new ReadFileException("Can't read file: " + e.getMessage());
+        }
     }
 }
