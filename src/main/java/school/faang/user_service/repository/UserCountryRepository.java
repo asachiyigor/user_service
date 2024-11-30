@@ -11,14 +11,6 @@ import java.util.Optional;
 @Repository
 public interface UserCountryRepository extends CrudRepository<Country, Long> {
 
-//    @Query(nativeQuery = true, value = """
-//            SELECT c.title FROM Country c
-//            WHERE title = :"title"
-//            """)
-//    Optional<Country> findByNameCaseInsensitive( String title);
-
     @Query("SELECT c FROM Country c WHERE LOWER(c.title) = LOWER(:title)")
     Optional<Country> findByNameCaseInsensitive(@Param("title") String title);
-
-
 }
