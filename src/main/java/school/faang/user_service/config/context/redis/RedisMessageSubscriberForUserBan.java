@@ -24,7 +24,7 @@ public class RedisMessageSubscriberForUserBan implements MessageListener {
                     objectMapper.getTypeFactory().constructCollectionType(List.class, Long.class));
             if (idsForBan != null && !idsForBan.isEmpty()) {
                 userService.banUsers(idsForBan);
-                log.debug("UserService finished is true!");
+                log.debug("user banned is finished!");
             } else {
                 log.warn("Received empty or null ID list for banning");
             }
