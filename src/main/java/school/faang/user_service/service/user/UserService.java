@@ -19,62 +19,70 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
 
-    public User getUserById(Long id) {
-        Optional<User> user = findUserByIdInDB(id);
-        if (user.isPresent()) {
-            log.info("User found with id: {}", id);
-            return user.get();
-        } else {
-            log.error("User with id: {} not found", id);
-            throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, id));
-        }
+  private final UserRepository userRepository;
+  private final UserMapper userMapper;
+
+  public User getUserById(Long id) {
+    Optional<User> user = findUserByIdInDB(id);
+    if (user.isPresent()) {
+      log.info("User found with id: {}", id);
+      return user.get();
+    } else {
+      log.error("User with id: {} not found", id);
+      throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, id));
     }
+  }
 
-    private Optional<User> findUserByIdInDB(Long id) {
-        log.debug("Searching for user with id: {}", id);
-        return userRepository.findById(id);
+  private Optional<User> findUserByIdInDB(Long id) {
+    log.debug("Searching for user with id: {}", id);
+    return userRepository.findById(id);
+  }
+
+  public boolean isUserExistByID(Long userId) {
+    return userRepository.existsById(userId);
+  }
+
+  public List<UserDto> getUsersByIds(List<Long> ids) {
+    List<User> users = userRepository.findAllById(ids);
+    return users.stream()
+        .map(userMapper::toDto)
+        .toList();
+  }
+
+  public UserDto getUserDtoByID(long userId) {
+    Optional<User> optionalUser = userRepository.findById(userId);
+    if (optionalUser.isEmpty()) {
+      throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, userId));
     }
+    return userMapper.toDto(optionalUser.get());
+  }
 
-    public boolean isUserExistByID(Long userId) {
-        return userRepository.existsById(userId);
+  public void saveUser(User user) {
+    try {
+      log.info("Saving user: {}", user);
+      userRepository.save(user);
+    } catch (Exception e) {
+      log.error("Error saving user: {}", user, e);
+      throw new UserSaveException(String.format(ErrorMessage.USER_SAVE_ERROR, user));
     }
+  }
 
-    public List<UserDto> getUsersByIds(List<Long> ids) {
-        List<User> users = userRepository.findAllById(ids);
-        return users.stream()
-                .map(userMapper::toDto)
-                .toList();
-    }
+  public static List<Long> getNotExistingUserIds(UserRepository userRepository,
+      List<Long> userIds) {
+    List<Long> existingUserIds = userRepository.findAllById(userIds)
+        .stream()
+        .map(User::getId)
+        .toList();
 
-    public UserDto getUserDtoByID(long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
-            throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, userId));
-        }
-        return userMapper.toDto(optionalUser.get());
-    }
+    return userIds.stream()
+        .filter(id -> !existingUserIds.contains(id))
+        .collect(Collectors.toList());
+  }
 
-    public void saveUser(User user) {
-        try {
-            log.info("Saving user: {}", user);
-            userRepository.save(user);
-        } catch (Exception e) {
-            log.error("Error saving user: {}", user, e);
-            throw new UserSaveException(String.format(ErrorMessage.USER_SAVE_ERROR, user));
-        }
-    }
-
-    public static List<Long> getNotExistingUserIds(UserRepository userRepository, List<Long> userIds) {
-        List<Long> existingUserIds = userRepository.findAllById(userIds)
-                .stream()
-                .map(User::getId)
-                .toList();
-
-        return userIds.stream()
-                .filter(id -> !existingUserIds.contains(id))
-                .collect(Collectors.toList());
-    }
+  public List<UserDto> getUserSubscribers(long userId) {
+    return userRepository.findUserSubsribers(userId).stream()
+        .map(userMapper::toDto)
+        .toList();
+  }
 }
