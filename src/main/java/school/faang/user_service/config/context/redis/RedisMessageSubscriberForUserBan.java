@@ -1,6 +1,7 @@
 package school.faang.user_service.config.context.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.json.student.DtoBanShema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -9,7 +10,6 @@ import school.faang.user_service.service.user.UserService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,17 +20,9 @@ public class RedisMessageSubscriberForUserBan implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
-            List<Long> idsForBan = objectMapper.readValue(message.getBody(),
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, Long.class));
-            if (idsForBan != null && !idsForBan.isEmpty()) {
-                userService.banUsers(idsForBan);
-                log.debug("user banned is finished!");
-            } else {
-                log.warn("Received empty or null ID list for banning");
-            }
+            userService.banUsers(objectMapper.readValue(message.getBody(), DtoBanShema.class).getIds());
+            log.debug("user banned is finished!");
         } catch (IOException e) {
-            // ошибку не выбрасываем, иначе можно прервать выполнение из списка редиски
-            // либо можно зациклить, если настроен на повторный запрос, а это не айс
             log.error("Error processing message: {}", new String(message.getBody(), StandardCharsets.UTF_8), e);
         }
     }

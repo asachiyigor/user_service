@@ -2,6 +2,7 @@ package school.faang.user_service.service.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.dto.user.UserDto;
@@ -79,7 +80,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Async("worker-pool")
     public void banUsers(List<Long> idForBanUsers) {
         List<User> usersToBan = userRepository.findAllById(idForBanUsers);
         usersToBan.forEach(user -> {
