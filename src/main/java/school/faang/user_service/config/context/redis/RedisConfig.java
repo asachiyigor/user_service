@@ -1,6 +1,5 @@
 package school.faang.user_service.config.context.redis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,8 +8,8 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import school.faang.user_service.service.user.UserService;
 
 import java.util.List;
 
@@ -37,8 +36,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisMessageSubscriberForUserBan redisMessageSubscriberForUserBan(ObjectMapper objectMapper, UserService userService) {
-        return new RedisMessageSubscriberForUserBan(objectMapper, userService);
+    public MessageListenerAdapter messageListenerForUserBan(MessageSubscriberForUserBan messageSubscriberForUserBan) {
+        return new MessageListenerAdapter(messageSubscriberForUserBan);
     }
 
     @Bean
@@ -47,12 +46,10 @@ public class RedisConfig {
     }
 
     @Bean
-    RedisMessageListenerContainer containerForUserBan(
-            JedisConnectionFactory jedisConnectionFactory,
-            RedisMessageSubscriberForUserBan redisMessageSubscriber) {
+    RedisMessageListenerContainer containerForUserBan(MessageListenerAdapter messageListenerForUserBan) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(jedisConnectionFactory);
-        container.addMessageListener(redisMessageSubscriber, topicForUserBan());
+        container.setConnectionFactory(jedisConnectionFactory());
+        container.addMessageListener(messageListenerForUserBan, topicForUserBan());
         return container;
     }
 }
