@@ -31,8 +31,20 @@ spring:
         follower-event-channel:
           name: follower_event
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 server:
   port: 8080
+
+services:
+  s3:
+    endpoint: http://localhost:9000
+    accessKey: user
+    secretKey: password
+    bucketName: corpbucket
 
 logging:
   level:
