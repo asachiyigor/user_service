@@ -1,22 +1,32 @@
 package school.faang.user_service.service.event;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.dto.event.EventDto;
 import school.faang.user_service.dto.event.EventFilterDto;
 import school.faang.user_service.dto.skill.SkillDto;
+import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.event.Event;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.event.EventMapper;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.event.EventRepository;
-import school.faang.user_service.entity.Skill;
+import school.faang.user_service.service.config.CleanupConfig;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class EventService {
@@ -24,6 +34,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
     private final UserRepository userRepository;
+    private final CleanupConfig cleanupConfig;
 
     public EventDto create(EventDto event) {
         validateUserSkills(event);
@@ -73,6 +84,34 @@ public class EventService {
                 .toList();
     }
 
+    @Scheduled(cron = "#{cleanupConfig.getCronExpression()}")
+    @Transactional
+    @Async("eventThreadPool")
+    public void clearEvents() {
+        log.info("Clear events job started");
+        EventFilterDto eventFilterDto = EventFilterDto.builder()
+                .endDateTo(LocalDateTime.now())
+                .build();
+        List<Long> eventsIds = getEventsByFilter(eventFilterDto)
+                .stream()
+                .map(EventDto::getId)
+                .collect(Collectors.toList());
+
+        int chunkSize = cleanupConfig.getChunkSize();
+        ExecutorService executorService = Executors.newFixedThreadPool(chunkSize);
+        for (int i = 0; i < eventsIds.size(); i += chunkSize) {
+            List<Long> chunk = eventsIds.subList(i, Math.min(i + chunkSize, eventsIds.size()));
+            executorService.submit(() -> eventRepository.deleteAllById(chunk));
+        }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(3, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Task interrupted", e);
+        }
+    }
+
     private void validateUserSkills(EventDto event) {
         User owner = userRepository.findById(event.getOwnerId())
                 .orElseThrow(() -> new DataValidationException(
@@ -112,7 +151,8 @@ public class EventService {
         return matchesTitle(event, filter)
                 && matchesDateRange(event, filter)
                 && matchesSkills(event, filter)
-                && matchesLocation(event, filter);
+                && matchesLocation(event, filter)
+                && matchesEndDateBefore(event, filter);
     }
 
     private boolean matchesTitle(Event event, EventFilterDto filter) {
@@ -128,6 +168,11 @@ public class EventService {
                 !event.getStartDate().isAfter(filter.getStartDateTo());
 
         return afterStartDate && beforeEndDate;
+    }
+
+    private boolean matchesEndDateBefore(Event event, EventFilterDto filter) {
+        return filter.getEndDateTo() == null ||
+                event.getEndDate().isBefore(filter.getEndDateTo());
     }
 
     private boolean matchesSkills(Event event, EventFilterDto filter) {
