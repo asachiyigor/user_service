@@ -4,10 +4,14 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres
     username: user
     password: password
+
+  profiles:
+    active: dev
+
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -20,14 +24,27 @@ spring:
     redis:
       port: 6379
       host: localhost
+      usersBanTopic: user_ban
       channels:
         mentorship-channel:
           name: mentorship_channel
         follower-event-channel:
           name: follower_event
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 server:
   port: 8080
+
+services:
+  s3:
+    endpoint: http://localhost:9000
+    accessKey: user
+    secretKey: password
+    bucketName: corpbucket
 
 logging:
   level:
