@@ -36,13 +36,13 @@ public class UserController {
         return userService.getUsersByIds(ids);
     }
 
+    @GetMapping("/users/subscribers/{userId}")
+    public List<UserDto> getUserSubscribers(@PathVariable long userId) {
+        return userService.getUserSubscribers(userId);
+    }
+
     @PostMapping("/CSV")
     public List<UserResponseCsvDto> getUsersFromCsv(@RequestParam MultipartFile file) {
-        try {
-            InputStream inputStream = file.getInputStream();
-            return userService.readingUsersFromCsv(inputStream);
-        } catch (IOException e) {
-            throw new ReadFileException("Can't read file: " + e.getMessage());
-        }
+        return userService.readingUsersFromCsv(file);
     }
 }

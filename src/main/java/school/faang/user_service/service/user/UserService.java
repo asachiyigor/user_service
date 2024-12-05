@@ -5,10 +5,18 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.json.student.PersonSchemaForUser;
 import io.micrometer.common.util.StringUtils;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import school.faang.user_service.dto.user.UserDto;
 import school.faang.user_service.dto.user.UserResponseCsvDto;
 import school.faang.user_service.entity.User;
@@ -27,6 +35,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Slf4j
 @Service
@@ -87,7 +97,24 @@ public class UserService {
 
         return userIds.stream()
                 .filter(id -> !existingUserIds.contains(id))
-                .collect(Collectors.toList());
+                .collect(toList());
+    }
+
+    public List<UserDto> getUserSubscribers(long userId) {
+        return userRepository.findUserSubsribers(userId).stream()
+                .map(userMapper::toDto)
+                .toList();
+    }
+
+    @Async("worker-pool")
+    @Synchronized
+    public void banUsers(List<Long> idForBanUsers) {
+        List<User> usersToBan = userRepository.findAllById(idForBanUsers);
+        usersToBan.forEach(user -> {
+            user.setBanned(true);
+            userRepository.save(user);
+        });
+        log.info("All found users were banned");
     }
 
     private String generateUsername(UserDto userDto) {
@@ -101,9 +128,10 @@ public class UserService {
         return RandomStringUtils.randomAlphanumeric(12);
     }
 
-    public List<UserResponseCsvDto> readingUsersFromCsv(InputStream inputStream) {
+    public List<UserResponseCsvDto> readingUsersFromCsv(MultipartFile file) {
         List<PersonSchemaForUser> persons = null;
         try {
+            InputStream inputStream = file.getInputStream();
             persons = parsingCsv(inputStream);
         } catch (IOException e) {
             throw new ReadFileException("File exception: " + e);
@@ -111,7 +139,7 @@ public class UserService {
         List<CompletableFuture<UserDto>> futures = createPersonsAsync(persons);
         return completeCreatingPersonsAsync(futures).stream()
                 .map(this::convertToUserResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<PersonSchemaForUser> parsingCsv(InputStream inputStream) throws IOException {
@@ -122,7 +150,7 @@ public class UserService {
             log.info("File successfully parsed.");
             return iterator.readAll().stream()
                     .filter(this::validateMinimalRequiredFields)
-                    .collect(Collectors.toList());
+                    .collect(toList());
         } catch (Exception e) {
             log.error("Error parsing CSV file", e);
             throw new ReadFileException("Cannot parse CSV file: " + e.getMessage());
@@ -191,7 +219,7 @@ public class UserService {
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                 .thenApply(dto -> futures.stream()
                         .map(CompletableFuture::join)
-                        .collect(Collectors.toList()))
+                        .collect(toList()))
                 .join();
     }
 

@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import school.faang.user_service.dto.user.UserDto;
 import school.faang.user_service.entity.Country;
 import school.faang.user_service.entity.User;
@@ -191,17 +192,17 @@ class UserServiceTest {
     @Test
     @DisplayName("Parse CSV File Successfully")
     public void testParseCsv() throws IOException {
+        MockMultipartFile csvFile = new MockMultipartFile("file", "test.csv", "text/csv", "name,email\njohn,john@example.com\njane,jane@example.com".getBytes());
         ObjectReader testObject = Mockito.mock(ObjectReader.class);
-        InputStream inputStream = new ByteArrayInputStream("file".getBytes());
         MappingIterator<Object> iterator = Mockito.mock(MappingIterator.class);
         Mockito.when(csvMapper.readerFor(any(Class.class))).thenReturn(testObject);
         Mockito.when(testObject.with(csvSchema)).thenReturn(testObject);
         Mockito.when(testObject.readValues(any(InputStream.class))).thenReturn(iterator);
         Mockito.when(iterator.readAll()).thenReturn(new ArrayList<>());
-        userService.readingUsersFromCsv(inputStream);
+        userService.readingUsersFromCsv(csvFile);
         Mockito.verify(csvMapper, Mockito.times(1)).readerFor(PersonSchemaForUser.class);
         Mockito.verify(testObject, Mockito.times(1)).with(csvSchema);
-        Mockito.verify(testObject, Mockito.times(1)).readValues(inputStream);
+        Mockito.verify(testObject, Mockito.times(1)).readValues(Mockito.any(InputStream.class));
         Mockito.verify(iterator, Mockito.times(1)).readAll();
     }
 
@@ -224,19 +225,19 @@ class UserServiceTest {
     @Test
     @DisplayName("Create User from CSV Throws Exception")
     public void testCreateUserCSV_ThrowsException() {
+        MockMultipartFile csvFile = new MockMultipartFile("file", "test.csv", "text/csv", "name,email\njohn,john@example.com\njane,jane@example.com".getBytes());
         ObjectReader testObject = Mockito.mock(ObjectReader.class);
-        InputStream inputStream = new ByteArrayInputStream("file".getBytes());
         when(csvMapper.readerFor(any(Class.class))).thenReturn(testObject);
         when(testObject.with(csvSchema)).thenReturn(testObject);
-        assertThrows(Exception.class, () -> userService.readingUsersFromCsv(inputStream));
+        assertThrows(Exception.class, () -> userService.readingUsersFromCsv(csvFile));
     }
 
     @Test
     @DisplayName("Read File Throws ReadFileException")
     void testReadFileException() {
-        InputStream inputStream = new ByteArrayInputStream("invalid,csv,file,content".getBytes());
+        MockMultipartFile csvFile = new MockMultipartFile("file", "test.csv", "text/csv", "name,email\njohn,john@example.com\njane,jane@example.com".getBytes());
         Assertions.assertThrows(ReadFileException.class, () -> {
-            userService.readingUsersFromCsv(inputStream);
+            userService.readingUsersFromCsv(csvFile);
         }, "Expected ReadFileException to be thrown");
     }
 
