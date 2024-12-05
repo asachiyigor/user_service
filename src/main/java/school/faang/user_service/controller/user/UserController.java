@@ -29,4 +29,9 @@ public class UserController {
     List<UserDto> getUsersByIds(@RequestBody List<Long> ids) {
         return userService.getUsersByIds(ids);
     }
+
+    @GetMapping("/users/subscribers/{userId}")
+    public List<UserDto> getUserSubscribers(@PathVariable long userId) {
+        return userService.getUserSubscribers(userId);
+    }
 }
