@@ -30,6 +30,8 @@ spring:
           name: mentorship_channel
         follower-event-channel:
           name: follower_event
+        search-appearance-channel:
+          name: search_appearance_event
 
   servlet:
     multipart:

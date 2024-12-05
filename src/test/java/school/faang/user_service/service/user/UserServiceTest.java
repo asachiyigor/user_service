@@ -1,5 +1,7 @@
 package school.faang.user_service.service.user;
 
+import org.joda.time.LocalDateTime;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,13 +10,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import school.faang.user_service.config.context.UserContext;
+import school.faang.user_service.dto.analyticsevent.SearchAppearanceEvent;
 import school.faang.user_service.dto.user.UserDto;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.event.Event;
 import school.faang.user_service.exception.ErrorMessage;
 import school.faang.user_service.exception.UserNotFoundException;
 import school.faang.user_service.mapper.user.UserMapper;
+import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
 import school.faang.user_service.repository.UserRepository;
+import school.faang.user_service.service.s3.s3ResponseKey;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,9 +43,17 @@ class UserServiceTest {
     @InjectMocks
     UserService userService;
 
+    @Mock
+    private SearchAppearanceEventPublisher searchAppearanceEventPublisher;
+
+    @Spy
+    private UserContext userContext;
+
     @Test
     @DisplayName("Get user by ID successfully")
     void getUserTest() {
+
+        userContext.setUserId(1L);
         long userId = 1L;
         User user = User.builder()
                 .id(userId)
