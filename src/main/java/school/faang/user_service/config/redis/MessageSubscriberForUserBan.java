@@ -1,4 +1,4 @@
-package school.faang.user_service.config.context.redis;
+package school.faang.user_service.config.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.json.student.DtoBanShema;

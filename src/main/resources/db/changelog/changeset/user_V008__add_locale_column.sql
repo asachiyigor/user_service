@@ -1,4 +1,2 @@
 ALTER TABLE users
-    ADD COLUMN locale varchar(32) DEFAULT 'UK';
-
-UPDATE users SET locale = 'UK' WHERE locale IS NULL;
+    ADD COLUMN IF NOT EXISTS locale varchar(32) NOT NULL DEFAULT 'en-US';

@@ -13,6 +13,7 @@ import java.util.List;
 public interface UserMapper {
 
     @Mapping(source = "participatedEvents", target = "participatedEventIds", qualifiedByName = "mapEventsToEventIds")
+    @Mapping(source = "contactPreference.preference", target = "preference")
     UserDto toDto(User user);
     User toEntity(UserDto userDto);
 
