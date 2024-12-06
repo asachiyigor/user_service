@@ -32,6 +32,8 @@ spring:
           name: follower_event
         project-follower-channel:
           name: project-follower-channel
+        user-view-channel:
+          name: user-view-channel
 
   servlet:
     multipart:

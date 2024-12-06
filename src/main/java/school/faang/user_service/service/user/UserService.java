@@ -8,12 +8,14 @@ import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import school.faang.user_service.dto.event.UserProfileEvent;
 import school.faang.user_service.dto.user.UserDto;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.exception.ErrorMessage;
 import school.faang.user_service.exception.UserNotFoundException;
 import school.faang.user_service.exception.UserSaveException;
 import school.faang.user_service.mapper.user.UserMapper;
+import school.faang.user_service.puiblisher.viewUserProfile.UserViewProfilePublisher;
 import school.faang.user_service.repository.UserRepository;
 
 @Slf4j
@@ -22,6 +24,7 @@ import school.faang.user_service.repository.UserRepository;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final UserViewProfilePublisher userViewProfilePublisher;
 
     public User getUserById(Long id) {
         Optional<User> user = findUserByIdInDB(id);
@@ -94,5 +97,10 @@ public class UserService {
             userRepository.save(user);
         });
         log.info("All found users were banned");
+    }
+
+    public void notificationUserWasViewed(UserProfileEvent userProfileEvent){
+        userViewProfilePublisher.publish(userProfileEvent);
+        log.info("UserProfileEvent was send.");
     }
 }
