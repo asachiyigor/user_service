@@ -30,6 +30,8 @@ spring:
           name: mentorship_channel
         follower-event-channel:
           name: follower_event
+        skillOffer-channel:
+          name: skill_offer_event
 
   servlet:
     multipart:
