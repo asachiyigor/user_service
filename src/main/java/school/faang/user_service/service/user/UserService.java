@@ -18,11 +18,9 @@ import school.faang.user_service.mapper.user.UserMapper;
 import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
 import school.faang.user_service.repository.UserRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -47,10 +45,12 @@ public class UserService {
 
     private Optional<User> findUserByIdInDB(Long id) {
         log.debug("Searching for user with id: {}", id);
+        publishSearchAppearanceEvent(id);
         return userRepository.findById(id);
     }
 
     public boolean isUserExistByID(Long userId) {
+        publishSearchAppearanceEvent(userId);
         return userRepository.existsById(userId);
     }
 
@@ -66,12 +66,7 @@ public class UserService {
         if (optionalUser.isEmpty()) {
             throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, userId));
         }
-        SearchAppearanceEvent event = SearchAppearanceEvent.builder()
-                .requesterId(userContext.getUserId())
-                .foundUserId(userId)
-//                .requestDateTime(LocalDateTime.now())
-                .build();
-        searchAppearanceEventPublisher.publish(event);
+        publishSearchAppearanceEvent(userId);
         return userMapper.toDto(optionalUser.get());
     }
 
@@ -110,10 +105,20 @@ public class UserService {
     public List<UserDto> findByFilter(UserFilterDto filterDto) {
         var users = userRepository.findAll().stream();
         log.info("Applying filters to users. Filter params: {}", filterDto);
-        return userFilters.stream()
+        List<UserDto> filteredUsers = userFilters.stream()
                 .filter(vacancyFilter -> vacancyFilter.isApplicable(filterDto))
                 .flatMap(vacancyFilterActual -> vacancyFilterActual.apply(users, filterDto))
                 .map(userMapper::toDto)
                 .toList();
+        filteredUsers.forEach(userDto -> publishSearchAppearanceEvent(userDto.getId()));
+        return filteredUsers;
+    }
+
+    private void publishSearchAppearanceEvent(Long foundUserId) {
+        SearchAppearanceEvent event = SearchAppearanceEvent.builder()
+                .requesterId(userContext.getUserId())
+                .foundUserId(foundUserId)
+                .build();
+        searchAppearanceEventPublisher.publish(event);
     }
 }

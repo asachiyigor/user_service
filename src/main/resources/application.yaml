@@ -24,14 +24,11 @@ spring:
     redis:
       port: 6379
       host: localhost
-      usersBanTopic: user_ban
       channels:
-        mentorship-channel:
-          name: mentorship_channel
-        follower-event-channel:
-          name: follower_event
+        user-ban-channel:
+          name: user-ban-event
         search-appearance-channel:
-          name: search_appearance_event
+          name: search-appearance-event
 
   servlet:
     multipart:

@@ -1,4 +1,4 @@
-package school.faang.user_service.config.context.redis;
+package school.faang.user_service.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.json.student.DtoBanShema;
@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MessageSubscriberForUserBan implements MessageListener {
+public class UserBanEventListener implements MessageListener {
     private final ObjectMapper objectMapper;
     private final UserService userService;
 

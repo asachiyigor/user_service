@@ -1,4 +1,4 @@
-package school.faang.user_service.config.context.redis;
+package school.faang.user_service.config.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import school.faang.user_service.listener.UserBanEventListener;
 
 @Configuration
 @RequiredArgsConstructor
@@ -37,7 +38,7 @@ public class RedisConfig {
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(jedisConnectionFactory());
-        redisTemplate.setDefaultSerializer(new Jackson2JsonRedisSerializer<>(Object.class));
+        redisTemplate.setDefaultSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
         return redisTemplate;
     }
 
@@ -46,17 +47,17 @@ public class RedisConfig {
         return new ChannelTopic(searchAppearanceTopic);
     }
 
-    @Value("${spring.data.redis.usersBanTopic}")
-    private String banUserTopic;
+    @Value("${spring.data.redis.channels.user-ban-channel.name}")
+    private String userBanTopic;
 
     @Bean
-    public MessageListenerAdapter messageListenerForUserBan(MessageSubscriberForUserBan messageSubscriberForUserBan) {
-        return new MessageListenerAdapter(messageSubscriberForUserBan);
+    public MessageListenerAdapter messageListenerForUserBan(UserBanEventListener userBanEventListener) {
+        return new MessageListenerAdapter(userBanEventListener);
     }
 
     @Bean
     public ChannelTopic banUserChannelTopic() {
-        return new ChannelTopic(banUserTopic);
+        return new ChannelTopic(userBanTopic);
     }
 
     @Bean
