@@ -3,6 +3,7 @@ package school.faang.user_service.service.user;
 import lombok.RequiredArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import school.faang.user_service.config.context.UserContext;
@@ -33,20 +34,21 @@ public class UserService {
     private final SearchAppearanceEventPublisher searchAppearanceEventPublisher;
 
     public User getUserById(Long id) {
-        Optional<User> user = findUserByIdInDB(id);
-        if (user.isPresent()) {
-            log.info("User found with id: {}", id);
-            return user.get();
-        } else {
-            log.error("User with id: {} not found", id);
-            throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, id));
+        if (id == null || id <= 0) {
+            log.error("Invalid user ID: {}", id);
+            throw new IllegalArgumentException("User ID must be a positive number");
         }
-    }
-
-    private Optional<User> findUserByIdInDB(Long id) {
         log.debug("Searching for user with id: {}", id);
         publishSearchAppearanceEvent(id);
-        return userRepository.findById(id);
+        return userRepository.findById(id)
+                .map(user -> {
+                    log.info("User found with id: {}", id);
+                    return user;
+                })
+                .orElseThrow(() -> {
+                    log.error("User with id: {} not found", id);
+                    return new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, id));
+                });
     }
 
     public boolean isUserExistByID(Long userId) {
@@ -118,6 +120,7 @@ public class UserService {
         SearchAppearanceEvent event = SearchAppearanceEvent.builder()
                 .requesterId(userContext.getUserId())
                 .foundUserId(foundUserId)
+                .requestedAt(LocalDateTime.now())
                 .build();
         searchAppearanceEventPublisher.publish(event);
     }
