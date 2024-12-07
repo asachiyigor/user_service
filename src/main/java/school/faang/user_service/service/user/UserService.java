@@ -5,19 +5,14 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.json.student.PersonSchemaForUser;
 import io.micrometer.common.util.StringUtils;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import school.faang.user_service.dto.event.UserProfileEvent;
 import org.springframework.web.multipart.MultipartFile;
+import school.faang.user_service.dto.event.UserProfileEvent;
 import school.faang.user_service.dto.user.UserDto;
 import school.faang.user_service.dto.user.UserResponseCsvDto;
 import school.faang.user_service.entity.User;
@@ -36,7 +31,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -233,7 +227,7 @@ public class UserService {
                 .build();
     }
 
-    public void notificationUserWasViewed(UserProfileEvent userProfileEvent){
+    public void notificationUserWasViewed(UserProfileEvent userProfileEvent) {
         userViewProfilePublisher.publish(userProfileEvent);
         log.info("UserProfileEvent was send.");
     }
