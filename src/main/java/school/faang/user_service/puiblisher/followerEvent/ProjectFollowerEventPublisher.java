@@ -24,7 +24,6 @@ public class ProjectFollowerEventPublisher implements MessagePublish<ProjectFoll
     @Override
     public void publish(ProjectFollowerEvent event) {
         try {
-
             redisTemplate.convertAndSend(projectFollowerChannel, objectMapper.writeValueAsString(event));
         } catch (JsonProcessingException e) {
             log.error("Can`t parse json: ", e);
