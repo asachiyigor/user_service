@@ -1,46 +1,59 @@
 package school.faang.user_service.service.user;
 
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.json.student.PersonSchemaForUser;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import school.faang.user_service.config.context.UserContext;
 import school.faang.user_service.dto.user.UserDto;
+import school.faang.user_service.entity.Country;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.event.Event;
 import school.faang.user_service.exception.ErrorMessage;
+import school.faang.user_service.exception.ReadFileException;
 import school.faang.user_service.exception.UserNotFoundException;
 import school.faang.user_service.mapper.user.UserMapper;
 import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
 import school.faang.user_service.repository.UserRepository;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith({MockitoExtension.class})
 class UserServiceTest {
     @Mock
     UserRepository userRepository;
-
     @Spy
     UserMapper userMapper = Mappers.getMapper(UserMapper.class);
-
     @InjectMocks
     UserService userService;
+    @Mock
+    private UserCountryService countryService;
+    @Mock
+    private CsvMapper csvMapper;
+    @Mock
+    private CsvSchema csvSchema;
 
     @Mock
     private SearchAppearanceEventPublisher searchAppearanceEventPublisher;
@@ -147,5 +160,162 @@ class UserServiceTest {
         assertEquals(2, notExistingUserIds.size());
         assertTrue(notExistingUserIds.contains(1L));
         assertTrue(notExistingUserIds.contains(3L));
+    }
+
+    @Test
+    @DisplayName("Create Persons Async When Email Already Exists")
+    public void createPersonsAsyncWhenEmailExists() {
+        PersonSchemaForUser personOne = new PersonSchemaForUser();
+        personOne.setEmail("john.doe@example.com");
+        UserDto result = UserDto.builder()
+                .email(personOne.getEmail())
+                .aboutMe("Already exists")
+                .build();
+        when(userRepository.existsByEmail(personOne.getEmail())).thenReturn(true);
+        List<CompletableFuture<UserDto>> futures = userService.createPersonsAsync(List.of(personOne));
+        for (CompletableFuture<UserDto> future : futures) {
+            UserDto expected = future.join();
+            assertEquals(expected, result);
+        }
+    }
+
+    @Test
+    @DisplayName("Create Multiple Persons Asynchronously")
+    void testCreatePersonsAsync() {
+        PersonSchemaForUser personOne = new PersonSchemaForUser();
+        personOne.setEmail("john.doe@example.com");
+        PersonSchemaForUser personTwo = new PersonSchemaForUser();
+        personTwo.setEmail("jane.smith@example.com");
+        List<PersonSchemaForUser> persons = List.of(personOne, personTwo);
+        List<CompletableFuture<UserDto>> createdUsers = userService.createPersonsAsync(persons);
+        Assertions.assertNotNull(createdUsers);
+        Assertions.assertEquals(2, createdUsers.size());
+    }
+
+    @Test
+    @DisplayName("Parse CSV File Successfully")
+    public void testParseCsv() throws IOException {
+        MockMultipartFile csvFile = new MockMultipartFile("file", "test.csv", "text/csv", "name,email\njohn,john@example.com\njane,jane@example.com".getBytes());
+        ObjectReader testObject = Mockito.mock(ObjectReader.class);
+        MappingIterator<Object> iterator = Mockito.mock(MappingIterator.class);
+        Mockito.when(csvMapper.readerFor(any(Class.class))).thenReturn(testObject);
+        Mockito.when(testObject.with(csvSchema)).thenReturn(testObject);
+        Mockito.when(testObject.readValues(any(InputStream.class))).thenReturn(iterator);
+        Mockito.when(iterator.readAll()).thenReturn(new ArrayList<>());
+        userService.readingUsersFromCsv(csvFile);
+        Mockito.verify(csvMapper, Mockito.times(1)).readerFor(PersonSchemaForUser.class);
+        Mockito.verify(testObject, Mockito.times(1)).with(csvSchema);
+        Mockito.verify(testObject, Mockito.times(1)).readValues(Mockito.any(InputStream.class));
+        Mockito.verify(iterator, Mockito.times(1)).readAll();
+    }
+
+    @Test
+    @DisplayName("Create User from CSV - Successful Creation")
+    void testCreateUserFromCsv_SuccessfulCreation() {
+        UserDto userDto = new UserDto();
+        userDto.setEmail("test@example.com");
+        userDto.setCountry(new Country());
+        User savedUser = new User();
+        savedUser.setId(1L);
+        savedUser.setParticipatedEvents(new ArrayList<>());
+        when(countryService.createCountryIfNotExists(any())).thenReturn(new Country());
+        when(userMapper.toEntity(userDto)).thenReturn(savedUser);
+        when(userRepository.save(any())).thenReturn(savedUser);
+        assertDoesNotThrow(() -> userService.createUserFromCsv(userDto));
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Create User from CSV Throws Exception")
+    public void testCreateUserCSV_ThrowsException() {
+        MockMultipartFile csvFile = new MockMultipartFile("file", "test.csv", "text/csv", "name,email\njohn,john@example.com\njane,jane@example.com".getBytes());
+        ObjectReader testObject = Mockito.mock(ObjectReader.class);
+        when(csvMapper.readerFor(any(Class.class))).thenReturn(testObject);
+        when(testObject.with(csvSchema)).thenReturn(testObject);
+        assertThrows(Exception.class, () -> userService.readingUsersFromCsv(csvFile));
+    }
+
+    @Test
+    @DisplayName("Read File Throws ReadFileException")
+    void testReadFileException() {
+        MockMultipartFile csvFile = new MockMultipartFile("file", "test.csv", "text/csv", "name,email\njohn,john@example.com\njane,jane@example.com".getBytes());
+        Assertions.assertThrows(ReadFileException.class, () -> {
+            userService.readingUsersFromCsv(csvFile);
+        }, "Expected ReadFileException to be thrown");
+    }
+
+    @Test
+    @DisplayName("Generate Username from Email")
+    void testGenerateUsername_WithEmail() {
+        UserDto userDto = new UserDto();
+        userDto.setEmail("john.doe@example.com");
+        String username = invokeGenerateUsername(userDto);
+        assertEquals("john.doe", username);
+    }
+
+    @Test
+    @DisplayName("Generate Random Username When No Email")
+    void testGenerateUsername_WithoutEmail() {
+        UserDto userDto = new UserDto();
+        String username = invokeGenerateUsername(userDto);
+        assertTrue(username.startsWith("user_"));
+        assertEquals(13, username.length());
+    }
+
+    @Test
+    @DisplayName("Generate Default Password")
+    void testGenerateDefaultPassword() {
+        String password = invokeGenerateDefaultPassword();
+        assertNotNull(password);
+        assertEquals(12, password.length());
+        assertTrue(password.matches("^[a-zA-Z0-9]+$"));
+    }
+
+    @Test
+    @DisplayName("Validate Minimal Required Fields - Valid Person")
+    void testValidateMinimalRequiredFields_ValidPerson() {
+        PersonSchemaForUser person = new PersonSchemaForUser();
+        person.setEmail("valid@example.com");
+        boolean result = invokeValidateMinimalRequiredFields(person);
+        assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("Validate Minimal Required Fields - Invalid Person")
+    void testValidateMinimalRequiredFields_InvalidPerson() {
+        PersonSchemaForUser person = new PersonSchemaForUser();
+        person.setEmail("");
+        boolean result = invokeValidateMinimalRequiredFields(person);
+        assertFalse(result);
+    }
+
+    private String invokeGenerateUsername(UserDto userDto) {
+        try {
+            java.lang.reflect.Method method = UserService.class.getDeclaredMethod("generateUsername", UserDto.class);
+            method.setAccessible(true);
+            return (String) method.invoke(userService, userDto);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String invokeGenerateDefaultPassword() {
+        try {
+            java.lang.reflect.Method method = UserService.class.getDeclaredMethod("generateDefaultPassword");
+            method.setAccessible(true);
+            return (String) method.invoke(userService);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean invokeValidateMinimalRequiredFields(PersonSchemaForUser person) {
+        try {
+            java.lang.reflect.Method method = UserService.class.getDeclaredMethod("validateMinimalRequiredFields", PersonSchemaForUser.class);
+            method.setAccessible(true);
+            return (boolean) method.invoke(userService, person);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

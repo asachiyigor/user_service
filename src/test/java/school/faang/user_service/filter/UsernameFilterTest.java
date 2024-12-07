@@ -1,5 +1,7 @@
 package school.faang.user_service.filter;
 
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import school.faang.user_service.entity.User;
 import school.faang.user_service.mapper.user.UserMapper;
 import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
 import school.faang.user_service.repository.UserRepository;
+import school.faang.user_service.service.user.UserCountryService;
 import school.faang.user_service.service.user.UserService;
 
 import java.util.List;
@@ -45,6 +48,9 @@ class UsernameFilterTest {
     private UsernameFilter usernameFilter;
     private UserContext userContext;
     private SearchAppearanceEventPublisher searchAppearanceEventPublisher;
+    private CsvMapper csvMapper;
+    private CsvSchema csvSchema;
+    private UserCountryService userCountryService;
 
 
     @BeforeEach
@@ -88,7 +94,7 @@ class UsernameFilterTest {
         userService = new UserService(
                 userRepository,
                 userMapper,
-                userFilters, userContext, searchAppearanceEventPublisher);
+                userFilters, userContext, searchAppearanceEventPublisher, csvMapper,  csvSchema, userCountryService);
     }
 
     private void initializeTestEntities() {
