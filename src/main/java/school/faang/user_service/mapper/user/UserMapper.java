@@ -1,5 +1,6 @@
 package school.faang.user_service.mapper.user;
 
+import com.json.student.PersonSchemaForUser;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -24,4 +25,9 @@ public interface UserMapper {
                 .map(Event::getId)
                 .toList();
     }
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "country.title", source = "country")
+    UserDto personToUserDto(PersonSchemaForUser person);
 }
