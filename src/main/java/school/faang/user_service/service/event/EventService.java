@@ -3,7 +3,6 @@ package school.faang.user_service.service.event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.dto.event.EventDto;
@@ -22,8 +21,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,6 +32,7 @@ public class EventService {
     private final EventMapper eventMapper;
     private final UserRepository userRepository;
     private final CleanupConfig cleanupConfig;
+    private final ExecutorService executorService;
 
     public EventDto create(EventDto event) {
         validateUserSkills(event);
@@ -84,7 +82,6 @@ public class EventService {
                 .toList();
     }
 
-    @Scheduled(cron = "#{cleanupConfig.getCronExpression()}")
     @Transactional
     @Async("eventThreadPool")
     public void clearEvents() {
@@ -98,17 +95,9 @@ public class EventService {
                 .collect(Collectors.toList());
 
         int chunkSize = cleanupConfig.getChunkSize();
-        ExecutorService executorService = Executors.newFixedThreadPool(chunkSize);
         for (int i = 0; i < eventsIds.size(); i += chunkSize) {
             List<Long> chunk = eventsIds.subList(i, Math.min(i + chunkSize, eventsIds.size()));
             executorService.submit(() -> eventRepository.deleteAllById(chunk));
-        }
-        executorService.shutdown();
-        try {
-            executorService.awaitTermination(3, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Task interrupted", e);
         }
     }
 

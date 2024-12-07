@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -56,6 +58,8 @@ class EventServiceTest {
     private UserRepository userRepository;
     @Mock
     private CleanupConfig cleanupConfig;
+    @Mock
+    private ExecutorService executorService;
     @InjectMocks
     private EventService eventService;
 
@@ -428,6 +432,11 @@ class EventServiceTest {
         for (int i = 0; i < events.size(); i++) {
             when(eventMapper.toDto(events.get(i))).thenReturn(eventDtos.get(i));
         }
+        doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(0);
+            task.run();
+            return null;
+        }).when(executorService).submit(any(Runnable.class));
 
         eventService.clearEvents();
 
