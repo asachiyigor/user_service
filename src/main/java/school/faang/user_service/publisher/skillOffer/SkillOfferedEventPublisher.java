@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import school.faang.user_service.publisher.MessagePublish;
 
@@ -12,7 +13,7 @@ import school.faang.user_service.publisher.MessagePublish;
 @RequiredArgsConstructor
 public class SkillOfferedEventPublisher implements MessagePublish<SkillOfferedEvent> {
     private final ObjectMapper objectMapper;
-    private final ReactiveRedisOperations<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${spring.data.redis.channels.skillOffer-channel.name}")
     private String topic;

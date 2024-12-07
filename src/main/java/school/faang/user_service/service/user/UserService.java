@@ -76,7 +76,8 @@ public class UserService {
         if (optionalUser.isEmpty()) {
             throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, userId));
         }
-        return userMapper.toDto(optionalUser.get());
+        UserDto userDto = userMapper.toDto(optionalUser.get());
+        return userDto;
     }
 
     public void saveUser(User user) {
