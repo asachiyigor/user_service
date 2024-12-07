@@ -120,7 +120,6 @@ public class UserService {
         SearchAppearanceEvent event = SearchAppearanceEvent.builder()
                 .requesterId(userContext.getUserId())
                 .foundUserId(foundUserId)
-                .requestedAt(LocalDateTime.now())
                 .build();
         searchAppearanceEventPublisher.publish(event);
     }
