@@ -22,7 +22,6 @@ public class UserDto {
     private String aboutMe;
     private String city;
     private Country country;
-    private String phone;
     private List<Long> participatedEventIds;
     private PreferredContact preference;
     private Locale locale;
