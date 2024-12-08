@@ -28,6 +28,9 @@ public class RedisConfig {
     @Value("${spring.data.redis.channels.search-appearance-channel.name}")
     private String searchAppearanceTopic;
 
+    @Value("${spring.data.redis.channels.user-ban-channel.name}")
+    private String userBanTopic;
+
     @Bean
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
@@ -46,9 +49,6 @@ public class RedisConfig {
     public ChannelTopic searchAppearanceTopic() {
         return new ChannelTopic(searchAppearanceTopic);
     }
-
-    @Value("${spring.data.redis.channels.user-ban-channel.name}")
-    private String userBanTopic;
 
     @Bean
     public MessageListenerAdapter messageListenerForUserBan(UserBanEventListener userBanEventListener) {
