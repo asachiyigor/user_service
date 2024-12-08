@@ -9,6 +9,7 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import school.faang.user_service.listener.UserBanEventListener;
 
@@ -37,7 +38,7 @@ public class RedisConfig {
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(jedisConnectionFactory());
-        redisTemplate.setDefaultSerializer(new StringRedisSerializer());
+        redisTemplate.setDefaultSerializer(new Jackson2JsonRedisSerializer<>(Object.class));
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
