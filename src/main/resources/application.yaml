@@ -11,7 +11,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -30,6 +30,8 @@ spring:
           name: mentorship_channel
         follower-event-channel:
           name: follower_event
+        project-follower-channel:
+          name: project-follower-channel
         skillOffer-channel:
           name: skill_offer_event
 
@@ -65,3 +67,9 @@ api-docs:
 swagger-ui:
   enabled: true
   path: /swagger-ui.html
+
+event-cleanup:
+  chunkSize: 100
+  threadNumber: 10
+  cron:
+    expression: "0 0 10 * * SUN"

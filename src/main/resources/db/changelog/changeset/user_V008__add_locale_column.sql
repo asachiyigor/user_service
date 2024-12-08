@@ -1,2 +1,2 @@
 ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS locale varchar(32) NOT NULL DEFAULT 'en-US';
+    ADD COLUMN IF NOT EXISTS locale varchar(64) NOT NULL DEFAULT 'en-US';
