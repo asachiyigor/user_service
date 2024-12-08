@@ -11,7 +11,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -29,6 +29,8 @@ spring:
           name: user-ban-event
         search-appearance-channel:
           name: search-appearance-event
+        project-follower-channel:
+          name: project-follower-channel
 
   servlet:
     multipart:
@@ -62,3 +64,9 @@ api-docs:
 swagger-ui:
   enabled: true
   path: /swagger-ui.html
+
+event-cleanup:
+  chunkSize: 100
+  threadNumber: 10
+  cron:
+    expression: "0 0 10 * * SUN"

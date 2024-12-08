@@ -1,6 +1,5 @@
 package school.faang.user_service.config.redis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,16 +8,13 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import school.faang.user_service.listener.UserBanEventListener;
 
 @Configuration
 @RequiredArgsConstructor
 public class RedisConfig {
-    private final ObjectMapper objectMapper;
-
     @Value("${spring.data.redis.host}")
     private String host;
 
@@ -41,7 +37,8 @@ public class RedisConfig {
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(jedisConnectionFactory());
-        redisTemplate.setDefaultSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+        redisTemplate.setDefaultSerializer(new StringRedisSerializer());
+        redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
@@ -56,15 +53,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public ChannelTopic banUserChannelTopic() {
+    public ChannelTopic userBanTopic() {
         return new ChannelTopic(userBanTopic);
-    }
-
-    @Bean
-    RedisMessageListenerContainer containerForUserBan(MessageListenerAdapter messageListenerForUserBan) {
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(jedisConnectionFactory());
-        container.addMessageListener(messageListenerForUserBan, banUserChannelTopic());
-        return container;
     }
 }

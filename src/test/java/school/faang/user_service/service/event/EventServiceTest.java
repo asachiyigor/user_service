@@ -16,25 +16,37 @@ import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.event.EventMapper;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.event.EventRepository;
+import school.faang.user_service.service.config.CleanupConfig;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static school.faang.user_service.util.TestDataFactory.EVENT_ID_1;
+import static school.faang.user_service.util.TestDataFactory.EVENT_ID_2;
+import static school.faang.user_service.util.TestDataFactory.LONDON;
+import static school.faang.user_service.util.TestDataFactory.MOSCOW;
+import static school.faang.user_service.util.TestDataFactory.USER_ID;
+import static school.faang.user_service.util.TestDataFactory.createDefaultEvent;
+import static school.faang.user_service.util.TestDataFactory.createDefaultEventDto;
 import static school.faang.user_service.util.TestDataFactory.createDefaultFilter;
 import static school.faang.user_service.util.TestDataFactory.createDefaultUser;
 import static school.faang.user_service.util.TestDataFactory.createUserWithInvalidSkills;
-import static school.faang.user_service.util.TestDataFactory.createDefaultEventDto;
-import static school.faang.user_service.util.TestDataFactory.createDefaultEvent;
-import static school.faang.user_service.util.TestDataFactory.EVENT_ID_1;
-import static school.faang.user_service.util.TestDataFactory.EVENT_ID_2;
-import static school.faang.user_service.util.TestDataFactory.MOSCOW;
-import static school.faang.user_service.util.TestDataFactory.LONDON;
-import static school.faang.user_service.util.TestDataFactory.USER_ID;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -44,6 +56,10 @@ class EventServiceTest {
     private EventMapper eventMapper;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private CleanupConfig cleanupConfig;
+    @Mock
+    private ExecutorService executorService;
     @InjectMocks
     private EventService eventService;
 
@@ -393,5 +409,51 @@ class EventServiceTest {
         assertFalse(results.isEmpty());
         assertEquals(1, results.size());
         assertEquals(eventDto1.getId(), results.get(0).getId());
+    }
+
+    @Test
+    @DisplayName("Event clean up job test")
+    void testClearEvents_WithEventList() {
+        List<Long> eventIds = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L);
+        List<EventDto> eventDtos = eventIds.stream()
+                .map(id -> EventDto.builder()
+                        .id(id)
+                        .endDate(LocalDateTime.now().minusDays(2))
+                        .build())
+                .toList();
+        List<Event> events = eventIds.stream()
+                .map(id -> Event.builder()
+                        .id(id)
+                        .endDate(LocalDateTime.now().minusDays(2))
+                        .build())
+                .toList();
+        when(cleanupConfig.getChunkSize()).thenReturn(10);
+        when(eventRepository.findAll()).thenReturn(events);
+        for (int i = 0; i < events.size(); i++) {
+            when(eventMapper.toDto(events.get(i))).thenReturn(eventDtos.get(i));
+        }
+        doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(0);
+            task.run();
+            return null;
+        }).when(executorService).submit(any(Runnable.class));
+
+        eventService.clearEvents();
+
+        verify(eventRepository, times(1)).deleteAllById(eventIds.subList(0, 10));
+        verify(eventRepository, times(1)).deleteAllById(eventIds.subList(10, 15));
+    }
+
+    @Test
+    @DisplayName("Event clean up job test - no events fround - empty event list")
+    void testClearEvents_WithEmptyList() {
+        EventFilterDto filter = new EventFilterDto();
+        filter.setEndDateTo(LocalDateTime.now());
+        when(eventService.getEventsByFilter(filter)).thenReturn(List.of());
+        when(cleanupConfig.getChunkSize()).thenReturn(10);
+
+        eventService.clearEvents();
+
+        verify(eventRepository, never()).deleteAllById(anyList());
     }
 }
