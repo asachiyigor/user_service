@@ -16,6 +16,7 @@ public class EventFilterDto {
     private String titleContains;
     private LocalDateTime startDateFrom;
     private LocalDateTime startDateTo;
+    private LocalDateTime endDateTo;
     private List<Long> skillIds;
     private String location;
 }
