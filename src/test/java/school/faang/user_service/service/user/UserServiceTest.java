@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import school.faang.user_service.config.context.UserContext;
 import school.faang.user_service.dto.user.UserDto;
 import school.faang.user_service.entity.Country;
 import school.faang.user_service.entity.User;
@@ -24,9 +25,9 @@ import school.faang.user_service.exception.ErrorMessage;
 import school.faang.user_service.exception.ReadFileException;
 import school.faang.user_service.exception.UserNotFoundException;
 import school.faang.user_service.mapper.user.UserMapper;
+import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
 import school.faang.user_service.repository.UserRepository;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -35,16 +36,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith({MockitoExtension.class})
 class UserServiceTest {
@@ -61,9 +55,16 @@ class UserServiceTest {
     @Mock
     private CsvSchema csvSchema;
 
+    @Mock
+    private SearchAppearanceEventPublisher searchAppearanceEventPublisher;
+
+    @Spy
+    private UserContext userContext;
+
     @Test
     @DisplayName("Get user by ID successfully")
     void getUserTest() {
+        userContext.setUserId(1L);
         long userId = 1L;
         User user = User.builder()
                 .id(userId)
@@ -117,6 +118,7 @@ class UserServiceTest {
     @Test
     @DisplayName("User exists by ID is true")
     void existsByIdTrue() {
+        userContext.setUserId(1L);
         long userId = 1L;
         when(userRepository.existsById(userId)).thenReturn(true);
         assertTrue(userService.isUserExistByID(userId));
@@ -126,6 +128,7 @@ class UserServiceTest {
     @Test
     @DisplayName("User exists by ID is false")
     void existsByIdFalse() {
+        userContext.setUserId(1L);
         long userId = 1L;
         when(userRepository.existsById(userId)).thenReturn(false);
         assertFalse(userService.isUserExistByID(userId));
