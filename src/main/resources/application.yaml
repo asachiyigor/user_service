@@ -31,6 +31,8 @@ spring:
           name: search-appearance-event
         project-follower-channel:
           name: project-follower-channel
+        bought-premium:
+          name: bought_premium_channel
 
   servlet:
     multipart:

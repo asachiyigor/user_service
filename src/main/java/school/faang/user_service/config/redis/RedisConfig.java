@@ -10,7 +10,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 import school.faang.user_service.listener.UserBanEventListener;
 
 @Configuration
@@ -28,6 +27,9 @@ public class RedisConfig {
     @Value("${spring.data.redis.channels.user-ban-channel.name}")
     private String userBanTopic;
 
+    @Value("${spring.data.redis.channels.bought-premium.name}")
+    private String boughtPremiumChannelTopic;
+
     @Bean
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
@@ -40,6 +42,8 @@ public class RedisConfig {
         redisTemplate.setConnectionFactory(jedisConnectionFactory());
         redisTemplate.setDefaultSerializer(new Jackson2JsonRedisSerializer<>(Object.class));
         redisTemplate.afterPropertiesSet();
+//        redisTemplate.setKeySerializer(new StringRedisSerializer());
+//        redisTemplate.setValueSerializer(new StringRedisSerializer());
         return redisTemplate;
     }
 
@@ -56,5 +60,10 @@ public class RedisConfig {
     @Bean
     public ChannelTopic userBanTopic() {
         return new ChannelTopic(userBanTopic);
+    }
+
+    @Bean
+    ChannelTopic boughtPremiumChannelTopic() {
+        return new ChannelTopic(boughtPremiumChannelTopic);
     }
 }
