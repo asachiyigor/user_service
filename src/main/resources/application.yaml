@@ -4,6 +4,10 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres
     username: user
     password: password
+
+  profiles:
+    active: dev
+
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -21,13 +25,29 @@ spring:
       port: 6379
       host: localhost
       channels:
-        mentorship-channel:
-          name: mentorship_channel
-        follower-event-channel:
-          name: follower_event
+        user-ban-channel:
+          name: user-ban-event
+        search-appearance-channel:
+          name: search-appearance-event
+        project-follower-channel:
+          name: project-follower-channel
+        bought-premium:
+          name: bought_premium_channel
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 server:
   port: 8080
+
+services:
+  s3:
+    endpoint: http://localhost:9000
+    accessKey: user
+    secretKey: password
+    bucketName: corpbucket
 
 logging:
   level:
@@ -46,3 +66,9 @@ api-docs:
 swagger-ui:
   enabled: true
   path: /swagger-ui.html
+
+event-cleanup:
+  chunkSize: 100
+  threadNumber: 10
+  cron:
+    expression: "0 0 10 * * SUN"

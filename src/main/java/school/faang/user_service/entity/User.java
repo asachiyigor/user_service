@@ -3,6 +3,7 @@ package school.faang.user_service.entity;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,6 +20,8 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,6 +37,7 @@ import school.faang.user_service.entity.goal.GoalInvitation;
 import school.faang.user_service.entity.mentorship.MentorshipRequest;
 import school.faang.user_service.entity.premium.Premium;
 import school.faang.user_service.entity.recommendation.Recommendation;
+import school.faang.user_service.util.LocaleConverter;
 
 @Data
 @Builder
@@ -158,4 +162,11 @@ public class User {
 
     @OneToOne(mappedBy = "user")
     private Premium premium;
+
+    @Column(name = "banned",nullable = false, columnDefinition = "boolean default false")
+    private boolean banned;
+
+    @Column(name = "locale")
+    @Convert(converter = LocaleConverter.class)
+    private Locale locale;
 }

@@ -1,5 +1,6 @@
 package school.faang.user_service.mapper.user;
 
+import com.json.student.PersonSchemaForUser;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -13,7 +14,9 @@ import java.util.List;
 public interface UserMapper {
 
     @Mapping(source = "participatedEvents", target = "participatedEventIds", qualifiedByName = "mapEventsToEventIds")
+    @Mapping(source = "contactPreference.preference", target = "preference")
     UserDto toDto(User user);
+
     User toEntity(UserDto userDto);
 
     @Named("mapEventsToEventIds")
@@ -22,4 +25,9 @@ public interface UserMapper {
                 .map(Event::getId)
                 .toList();
     }
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "country.title", source = "country")
+    UserDto personToUserDto(PersonSchemaForUser person);
 }
