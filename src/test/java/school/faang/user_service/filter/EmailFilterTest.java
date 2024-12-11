@@ -14,6 +14,7 @@ import school.faang.user_service.dto.user.UserFilterDto;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.mapper.user.UserMapper;
 import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
+import school.faang.user_service.puiblisher.viewUserProfile.UserViewProfilePublisher;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.service.user.UserCountryService;
 import school.faang.user_service.service.user.UserService;
@@ -31,6 +32,8 @@ class EmailFilterTest {
     private UserRepository userRepository;
     @Mock
     private UserMapper userMapper;
+    @Mock
+    UserViewProfilePublisher userViewProfilePublisher;
 
     @InjectMocks
     private UserService userService;
@@ -94,7 +97,8 @@ class EmailFilterTest {
         userService = new UserService(
                 userRepository,
                 userMapper,
-                userFilters, userContext, searchAppearanceEventPublisher, csvMapper,  csvSchema, userCountryService);
+                userFilters, userContext, searchAppearanceEventPublisher, userViewProfilePublisher, csvMapper,
+                csvSchema, userCountryService);
     }
 
     private void initializeTestEntities() {

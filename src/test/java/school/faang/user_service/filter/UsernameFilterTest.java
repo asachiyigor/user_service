@@ -14,6 +14,7 @@ import school.faang.user_service.dto.user.UserFilterDto;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.mapper.user.UserMapper;
 import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
+import school.faang.user_service.puiblisher.viewUserProfile.UserViewProfilePublisher;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.service.user.UserCountryService;
 import school.faang.user_service.service.user.UserService;
@@ -48,6 +49,7 @@ class UsernameFilterTest {
     private UsernameFilter usernameFilter;
     private UserContext userContext;
     private SearchAppearanceEventPublisher searchAppearanceEventPublisher;
+    private UserViewProfilePublisher userViewProfilePublisher;
     private CsvMapper csvMapper;
     private CsvSchema csvSchema;
     private UserCountryService userCountryService;
@@ -76,6 +78,7 @@ class UsernameFilterTest {
         boolean isApplicable = usernameFilter.isApplicable(userFilterDto);
         assertFalse(isApplicable);
     }
+
     @Test
     @DisplayName("Should find users with username filter")
     void shouldFindUsersWithEmailFilter() {
@@ -94,7 +97,8 @@ class UsernameFilterTest {
         userService = new UserService(
                 userRepository,
                 userMapper,
-                userFilters, userContext, searchAppearanceEventPublisher, csvMapper,  csvSchema, userCountryService);
+                userFilters, userContext, searchAppearanceEventPublisher, userViewProfilePublisher, csvMapper,
+                csvSchema, userCountryService);
     }
 
     private void initializeTestEntities() {
