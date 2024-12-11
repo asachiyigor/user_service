@@ -31,6 +31,8 @@ spring:
           name: search-appearance-event
         project-follower-channel:
           name: project-follower-channel
+        skillOffer-channel:
+          name: skill_offer_event
 
   servlet:
     multipart:
