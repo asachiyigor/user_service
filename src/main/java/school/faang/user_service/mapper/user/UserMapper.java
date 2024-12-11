@@ -15,8 +15,8 @@ public interface UserMapper {
 
     @Mapping(source = "participatedEvents", target = "participatedEventIds", qualifiedByName = "mapEventsToEventIds")
     @Mapping(source = "contactPreference.preference", target = "preference")
+    @Mapping(target= "country", ignore = true)
     UserDto toDto(User user);
-
     User toEntity(UserDto userDto);
 
     @Named("mapEventsToEventIds")

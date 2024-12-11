@@ -66,6 +66,7 @@ public class RecommendationServiceTest {
     private final Long receiverId = 2L;
     private final Long skillId = 1L;
     private final String recommendationContent = "Test recommendation content";
+    private final SkillOfferDto skillOfferDto = createSkillOfferDto();
 
     @BeforeEach
     void setup() {
@@ -105,7 +106,7 @@ public class RecommendationServiceTest {
         when(userRepository.existsById(receiverId)).thenReturn(true);
         when(skillRepository.existsById(skillId)).thenReturn(true);
         when(recommendationRepository.create(authorId, receiverId, recommendationDto.getContent())).thenReturn(1L);
-        List<SkillOfferDto> expectedSkillOffers = Collections.singletonList(new SkillOfferDto(1L));
+        List<SkillOfferDto> expectedSkillOffers = Collections.singletonList(skillOfferDto);
         recommendationDto.setSkillOffers(expectedSkillOffers);
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
@@ -131,7 +132,7 @@ public class RecommendationServiceTest {
         when(recommendationRepository.create(authorId, receiverId, recommendationDto.getContent())).thenReturn(1L);
         when(skillRepository.findUserSkill(skillId, receiverId)).thenReturn(Optional.of(new Skill()));
         when(userSkillGuaranteeRepository.existsGuarantorForUserAndSkill(receiverId, skillId, authorId)).thenReturn(false);
-        List<SkillOfferDto> expectedSkillOffers = Collections.singletonList(new SkillOfferDto(1L));
+        List<SkillOfferDto> expectedSkillOffers = Collections.singletonList(skillOfferDto);
         recommendationDto.setSkillOffers(expectedSkillOffers);
 
         RecommendationDto result = recommendationService.createRecommendation(recommendationDto);
@@ -186,7 +187,7 @@ public class RecommendationServiceTest {
     void testValidateSkillsAreUniqueThrowsException() {
         when(userRepository.existsById(receiverId)).thenReturn(true);
         when(userRepository.existsById(authorId)).thenReturn(true);
-        recommendationDto.setSkillOffers(List.of(new SkillOfferDto(1L), new SkillOfferDto(1L)));
+        recommendationDto.setSkillOffers(List.of(skillOfferDto, skillOfferDto));
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class, () -> recommendationService.createRecommendation(recommendationDto));
         Assertions.assertEquals("Skill Offer list has duplicate skills", dataValidationException.getMessage());
@@ -195,10 +196,11 @@ public class RecommendationServiceTest {
     @Test
     @DisplayName("Test create recommendation - skill id not found - negative")
     void testValidateSkillIdNotFound() {
+        skillOfferDto.setSkillId(2L);
         when(userRepository.existsById(anyLong())).thenReturn(true);
         when(userRepository.existsById(anyLong())).thenReturn(true);
         when(skillRepository.existsById(anyLong())).thenReturn(false);
-        recommendationDto.setSkillOffers(List.of(new SkillOfferDto(2L)));
+        recommendationDto.setSkillOffers(List.of(skillOfferDto));
 
         DataValidationException dataValidationException = assertThrows(DataValidationException.class,
                 () -> recommendationService.createRecommendation(recommendationDto));
@@ -223,12 +225,14 @@ public class RecommendationServiceTest {
     @Test
     @DisplayName("Test update recommendation - Skill list not empty - success")
     void testUpdateRecommendationSuccess() {
+        SkillOfferDto skillOfferDtoSecond = createSkillOfferDto();
+        skillOfferDtoSecond.setSkillId(2L);
         when(recommendationRepository.existsById(1L)).thenReturn(true);
         when(userRepository.existsById(authorId)).thenReturn(true);
         when(userRepository.existsById(receiverId)).thenReturn(true);
         when(skillRepository.existsById(anyLong())).thenReturn(true);
         recommendationDto.setContent("Updated content");
-        List<SkillOfferDto> expectedSkillOffers = Arrays.asList(new SkillOfferDto(1L), new SkillOfferDto(2L));
+        List<SkillOfferDto> expectedSkillOffers = Arrays.asList(skillOfferDto, skillOfferDtoSecond);
         recommendationDto.setSkillOffers(expectedSkillOffers);
 
         RecommendationDto result = recommendationService.updateRecommendation(1L, recommendationDto);
@@ -327,5 +331,11 @@ public class RecommendationServiceTest {
 
         Assertions.assertEquals(1, result.getTotalElements());
         Assertions.assertEquals(recommendationDto.getContent(), result.getContent().get(0).getContent());
+    }
+
+    private SkillOfferDto createSkillOfferDto() {
+        return SkillOfferDto.builder()
+                .skillId(1L)
+                .build();
     }
 }

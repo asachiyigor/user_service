@@ -24,16 +24,17 @@ spring:
     redis:
       port: 6379
       host: localhost
-      usersBanTopic: user_ban
       channels:
-        mentorship-channel:
-          name: mentorship_channel
-        follower-event-channel:
-          name: follower_event
+        user-ban-channel:
+          name: user-ban-event
+        search-appearance-channel:
+          name: search-appearance-event
         project-follower-channel:
           name: project-follower-channel
         user-view-channel:
           name: user-view-channel
+        skillOffer-channel:
+          name: skill_offer_event
 
   servlet:
     multipart:
@@ -67,3 +68,9 @@ api-docs:
 swagger-ui:
   enabled: true
   path: /swagger-ui.html
+
+event-cleanup:
+  chunkSize: 100
+  threadNumber: 10
+  cron:
+    expression: "0 0 10 * * SUN"

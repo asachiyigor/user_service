@@ -13,15 +13,20 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import school.faang.user_service.dto.event.UserProfileEvent;
+import school.faang.user_service.config.context.UserContext;
+import school.faang.user_service.dto.analyticsevent.SearchAppearanceEvent;
 import school.faang.user_service.dto.user.UserDto;
+import school.faang.user_service.dto.user.UserFilterDto;
 import school.faang.user_service.dto.user.UserResponseCsvDto;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.exception.ErrorMessage;
 import school.faang.user_service.exception.ReadFileException;
 import school.faang.user_service.exception.UserNotFoundException;
 import school.faang.user_service.exception.UserSaveException;
+import school.faang.user_service.filter.UserFilter;
 import school.faang.user_service.mapper.user.UserMapper;
 import school.faang.user_service.puiblisher.viewUserProfile.UserViewProfilePublisher;
+import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
 import school.faang.user_service.repository.UserRepository;
 
 import java.io.IOException;
@@ -40,24 +45,34 @@ import static java.util.stream.Collectors.toList;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final List<UserFilter> userFilters;
+    private final UserContext userContext;
+    private final SearchAppearanceEventPublisher searchAppearanceEventPublisher;
     private final UserViewProfilePublisher userViewProfilePublisher;
     private final CsvMapper csvMapper;
     private final CsvSchema schema;
     private final UserCountryService countryService;
 
     public User getUserById(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        log.debug("Searching for user with id: {}", id);
-        if (user.isPresent()) {
-            log.info("User found with id: {}", id);
-            return user.get();
-        } else {
-            log.error("User with id: {} not found", id);
-            throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, id));
+        if (id == null || id <= 0) {
+            log.error("Invalid user ID: {}", id);
+            throw new IllegalArgumentException("User ID must be a positive number");
         }
+        log.debug("Searching for user with id: {}", id);
+        publishSearchAppearanceEvent(id);
+        return userRepository.findById(id)
+                .map(user -> {
+                    log.info("User found with id: {}", id);
+                    return user;
+                })
+                .orElseThrow(() -> {
+                    log.error("User with id: {} not found", id);
+                    return new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, id));
+                });
     }
 
     public boolean isUserExistByID(Long userId) {
+        publishSearchAppearanceEvent(userId);
         return userRepository.existsById(userId);
     }
 
@@ -73,6 +88,7 @@ public class UserService {
         if (optionalUser.isEmpty()) {
             throw new UserNotFoundException(String.format(ErrorMessage.USER_NOT_FOUND, userId));
         }
+        publishSearchAppearanceEvent(userId);
         return userMapper.toDto(optionalUser.get());
     }
 
@@ -112,6 +128,26 @@ public class UserService {
             userRepository.save(user);
         });
         log.info("All found users were banned");
+    }
+
+    public List<UserDto> findByFilter(UserFilterDto filterDto) {
+        var users = userRepository.findAll().stream();
+        log.info("Applying filters to users. Filter params: {}", filterDto);
+        List<UserDto> filteredUsers = userFilters.stream()
+                .filter(vacancyFilter -> vacancyFilter.isApplicable(filterDto))
+                .flatMap(vacancyFilterActual -> vacancyFilterActual.apply(users, filterDto))
+                .map(userMapper::toDto)
+                .toList();
+        filteredUsers.forEach(userDto -> publishSearchAppearanceEvent(userDto.getId()));
+        return filteredUsers;
+    }
+
+    private void publishSearchAppearanceEvent(Long foundUserId) {
+        SearchAppearanceEvent event = SearchAppearanceEvent.builder()
+                .requesterId(userContext.getUserId())
+                .foundUserId(foundUserId)
+                .build();
+        searchAppearanceEventPublisher.publish(event);
     }
 
     private String generateUsername(UserDto userDto) {
