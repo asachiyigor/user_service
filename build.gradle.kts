@@ -89,6 +89,7 @@ jsonSchema2Pojo {
     setSource(files("src/main/resources/json"))
     targetDirectory = file("${project.buildDir}/generated-sources/js2p")
     targetPackage = "com.json.student"
+    useLongIntegers = true
     setSourceType("jsonschema")
 }
 
@@ -109,7 +110,8 @@ val jacocoInclude = listOf(
     "**/controller/**",
     "**/service/**",
     "**/validator/**",
-    "**/mapper/**"
+    "**/mapper/**",
+    "**/filter/**"
 )
 jacoco {
     toolVersion = "0.8.9"

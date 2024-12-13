@@ -1,5 +1,6 @@
 package school.faang.user_service.dto.recommendation;
 
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,5 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SkillOfferDto {
-    Long skillId;
+    @Positive
+    private Long senderId;
+    @Positive
+    private Long skillId;
+    @Positive
+    private Long receiverId;
 }

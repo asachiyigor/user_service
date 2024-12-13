@@ -48,11 +48,7 @@ public class RecommendationRequestService {
 
     @Transactional
     public RecommendationRequestDto create(@NotNull @Valid RecommendationRequestDto requestDto) {
-        validateUserExist(requestDto.getRequesterId());
-        validateUserExist(requestDto.getReceiverId());
-        validateRequestPeriod(requestDto.getRequesterId(), requestDto.getReceiverId());
-        validateSkillsExist(requestDto.getSkillsIds());
-
+        validateRequest(requestDto);
         RecommendationRequest requestEntity = requestMapper.toEntity(requestDto);
         requestEntity.setRequester(userService.getUserById(requestDto.getRequesterId()));
         requestEntity.setReceiver(userService.getUserById(requestDto.getReceiverId()));
@@ -66,6 +62,14 @@ public class RecommendationRequestService {
         });
         requestRepository.save(requestSaved);
         return requestMapper.toDto(requestSaved);
+    }
+
+    private void validateRequest(RecommendationRequestDto requestDto)
+    {
+        validateUserExist(requestDto.getRequesterId());
+        validateUserExist(requestDto.getReceiverId());
+        validateRequestPeriod(requestDto.getRequesterId(), requestDto.getReceiverId());
+        validateSkillsExist(requestDto.getSkillsIds());
     }
 
     public List<RecommendationRequestDto> getRequests(@NotNull RequestFilterDto filterDto) {
