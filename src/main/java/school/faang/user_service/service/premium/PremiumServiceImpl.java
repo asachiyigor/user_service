@@ -21,8 +21,6 @@ public class PremiumServiceImpl implements PremiumService {
   private final UserService userService;
   private final PremiumMapper premiumMapper;
   private final BoughtPremiumPublisher boughtPremiumPublisher;
-//  private final PaymentServiceClient paymentServiceClient;
-//  private final ObjectMapper objectMapper;
 
   @Override
   public PremiumDto buyPremium(long userId, PremiumPeriod premiumPlan) {
@@ -42,7 +40,7 @@ public class PremiumServiceImpl implements PremiumService {
   }
 
   private void validatePayment() {
-//    TODO
+//    TODO: to implement in the next task BJS2-40579
   }
 
   private PremiumDto createPremiumDto(long userId, PremiumPeriod premiumPlan) {
