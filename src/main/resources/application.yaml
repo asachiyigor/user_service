@@ -31,6 +31,10 @@ spring:
           name: search-appearance-event
         project-follower-channel:
           name: project-follower-channel
+        user-view-channel:
+          name: user-view-channel
+        skillOffer-channel:
+          name: skill_offer_event
         bought-premium:
           name: bought_premium_channel
 

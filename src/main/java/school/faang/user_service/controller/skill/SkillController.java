@@ -5,9 +5,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import school.faang.user_service.dto.recommendation.SkillOfferDto;
 import school.faang.user_service.dto.skill.SkillCandidateDto;
 import school.faang.user_service.dto.skill.SkillDto;
 import school.faang.user_service.entity.recommendation.SkillOffer;
+import school.faang.user_service.service.skil.SkillOfferService;
 import school.faang.user_service.service.skil.SkillService;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 @RequestMapping("/skills")
 public class SkillController {
     private final SkillService skillService;
+    private final SkillOfferService skillOfferService;
 
     @PostMapping
     public SkillDto create(@RequestBody @Valid @NotNull SkillDto skillDto) {     // возвращяет скил дто
@@ -38,5 +41,10 @@ public class SkillController {
     public List<SkillOffer> acquireSkillFromOffers(@PathVariable("id") @NotNull long skillId,
                                                    @RequestParam @NotNull long userId) {
         return skillService.acquireSkillFromOffers(skillId, userId);
+    }
+
+    @PostMapping("/offer")
+    public void createSkillOffer(@RequestBody @Valid @NotNull SkillOfferDto skillOfferDto) {
+        skillOfferService.createSkillOffer(skillOfferDto);
     }
 }

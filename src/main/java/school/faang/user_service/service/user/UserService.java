@@ -5,6 +5,8 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.json.student.PersonSchemaForUser;
 import io.micrometer.common.util.StringUtils;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import school.faang.user_service.dto.event.UserProfileEvent;
 import school.faang.user_service.config.context.UserContext;
 import school.faang.user_service.dto.analyticsevent.SearchAppearanceEvent;
 import school.faang.user_service.dto.user.UserDto;
@@ -24,6 +27,7 @@ import school.faang.user_service.exception.UserNotFoundException;
 import school.faang.user_service.exception.UserSaveException;
 import school.faang.user_service.filter.UserFilter;
 import school.faang.user_service.mapper.user.UserMapper;
+import school.faang.user_service.puiblisher.viewUserProfile.UserViewProfilePublisher;
 import school.faang.user_service.publisher.SearchAppearanceEventPublisher;
 import school.faang.user_service.repository.UserRepository;
 
@@ -46,6 +50,7 @@ public class UserService {
     private final List<UserFilter> userFilters;
     private final UserContext userContext;
     private final SearchAppearanceEventPublisher searchAppearanceEventPublisher;
+    private final UserViewProfilePublisher userViewProfilePublisher;
     private final CsvMapper csvMapper;
     private final CsvSchema schema;
     private final UserCountryService countryService;
@@ -258,5 +263,10 @@ public class UserService {
                 .email(userDto.getEmail())
                 .response(userDto.getAboutMe())
                 .build();
+    }
+
+    public void notificationUserWasViewed(UserProfileEvent userProfileEvent) {
+        userViewProfilePublisher.publish(userProfileEvent);
+        log.info("UserProfileEvent was send.");
     }
 }
