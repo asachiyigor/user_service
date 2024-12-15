@@ -59,8 +59,8 @@ public class PremiumServiceImpl implements PremiumService {
     LocalDateTime startDate = LocalDateTime.now();
     return PremiumDto.builder()
         .userId(userId)
-        .startDate(startDate)
-        .endDate(startDate.plusDays(premiumPlan.getDays()))
+        .startDate(startDate.toString())
+        .endDate(startDate.plusDays(premiumPlan.getDays()).toString())
         .build();
   }
 
