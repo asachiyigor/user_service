@@ -31,6 +31,9 @@ public class RedisConfig {
   @Value("${spring.data.redis.channels.bought-premium.name}")
   private String boughtPremiumChannelTopic;
 
+  @Value("${spring.data.redis.channels.recommendation.name}")
+  private String recommendationChannelTopic;
+
   @Bean
   public JedisConnectionFactory jedisConnectionFactory() {
     RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
@@ -66,4 +69,10 @@ public class RedisConfig {
   ChannelTopic boughtPremiumChannelTopic() {
     return new ChannelTopic(boughtPremiumChannelTopic);
   }
+
+  @Bean
+  ChannelTopic recommendationChannelTopic() {
+    return new ChannelTopic(recommendationChannelTopic);
+  }
+
 }
