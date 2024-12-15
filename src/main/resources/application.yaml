@@ -35,6 +35,8 @@ spring:
           name: user-view-channel
         skillOffer-channel:
           name: skill_offer_event
+        bought-premium:
+          name: bought_premium_channel
 
   servlet:
     multipart:

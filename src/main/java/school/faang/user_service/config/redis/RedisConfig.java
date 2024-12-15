@@ -28,6 +28,9 @@ public class RedisConfig {
     @Value("${spring.data.redis.channels.user-ban-channel.name}")
     private String userBanTopic;
 
+    @Value("${spring.data.redis.channels.bought-premium.name}")
+    private String boughtPremiumChannelTopic;
+
     @Bean
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
@@ -56,5 +59,10 @@ public class RedisConfig {
     @Bean
     public ChannelTopic userBanTopic() {
         return new ChannelTopic(userBanTopic);
+    }
+
+    @Bean
+    ChannelTopic boughtPremiumChannelTopic() {
+        return new ChannelTopic(boughtPremiumChannelTopic);
     }
 }
