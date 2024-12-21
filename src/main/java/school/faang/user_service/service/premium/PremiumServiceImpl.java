@@ -49,11 +49,11 @@ public class PremiumServiceImpl implements PremiumService {
         .amount(sum)
         .currencyCode("USD")
         .build();
-
     PaymentStatus status = paymentServiceClient.sendPayment(paymentRequest).status();
     if (!status.equals(PaymentStatus.SUCCESS)) {
       throw new DataValidationException("Payment failed!");
     }
+
   }
 
   private PremiumDto createPremiumDto(long userId, PremiumPeriod premiumPlan) {

@@ -1,5 +1,6 @@
 package school.faang.user_service.controller.premium;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,10 +19,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import school.faang.user_service.dto.premium.PremiumDto;
 import school.faang.user_service.entity.premium.PremiumPeriod;
+import school.faang.user_service.exception.DataValidationException;
+import school.faang.user_service.exception.GlobalExceptionHandler;
 import school.faang.user_service.service.premium.PremiumService;
 
 @WebMvcTest
-@ContextConfiguration(classes = {PremiumController.class})
+@ContextConfiguration(classes = {PremiumController.class, GlobalExceptionHandler.class})
 class PremiumControllerTest {
 
   private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -50,6 +53,34 @@ class PremiumControllerTest {
 
     verify(premiumService, times(1)).buyPremium(userId, period);
   }
+
+  @Test
+  @DisplayName("Should throw exception and return bad request if Payment failed")
+  void testBuyPremiumFailedPayment() throws Exception {
+    long userId = 10L;
+    int days = 30;
+    PremiumPeriod period = PremiumPeriod.fromDays(days);
+
+    when(premiumService.buyPremium(userId, period)).thenThrow(
+        new DataValidationException("Payment failed!"));
+    mockMvc.perform(post("/api/v1/premium/buy/{days}", days)
+            .header("x-user-id", userId))
+        .andExpect(
+            result -> assertInstanceOf(DataValidationException.class,
+                result.getResolvedException()))
+        .andExpect(status().isBadRequest());
+
+    verify(premiumService, times(1)).buyPremium(userId, period);
+  }
+
+  @Test
+  @DisplayName("Should return bad request when no userId in header")
+  void testBuyPremiumNoUserIdInHeader() throws Exception {
+    int days = 30;
+    mockMvc.perform(post("/api/v1/premium/buy/{days}", days))
+        .andExpect(status().isBadRequest());
+  }
+
 
   private PremiumDto createPremiumDto(long userId, PremiumPeriod premiumPlan) {
     LocalDateTime startDate = LocalDateTime.now();
