@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +43,7 @@ import school.faang.user_service.repository.UserSkillGuaranteeRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRepository;
 import school.faang.user_service.repository.recommendation.SkillOfferRepository;
 
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 public class RecommendationServiceTest {
 
@@ -242,7 +244,7 @@ public class RecommendationServiceTest {
         when(userRepository.existsById(anyLong())).thenReturn(true);
         when(userRepository.existsById(anyLong())).thenReturn(true);
         Recommendation recentRecommendation = new Recommendation();
-        recentRecommendation.setCreatedAt(LocalDateTime.now().minusMonths(6));
+        recentRecommendation.setCreatedAt(LocalDateTime.now().minusMonths(6).plusMinutes(1));
         when(recommendationRepository.findFirstByAuthorIdAndReceiverIdOrderByCreatedAtDesc(authorId, receiverId))
                 .thenReturn(Optional.of(recentRecommendation));
 

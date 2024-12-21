@@ -1,5 +1,11 @@
 package school.faang.user_service.service.recommendation;
 
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,14 +23,6 @@ import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.UserSkillGuaranteeRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRepository;
 import school.faang.user_service.repository.recommendation.SkillOfferRepository;
-
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -55,25 +53,25 @@ public class RecommendationService {
 
     validateUserIdExists(authorId);
     validateUserIdExists(receiverId);
-    skillOffers.ifPresent(offers -> {
-      validateSkillsAreUnique(offers);
-      validateSkillIdExists(offers);
-    });
     validateRecommendationProvidedInLast6Months(authorId, receiverId, currentDateTime);
 
     Long recommendationId = recommendationRepository.create(authorId, receiverId,
         recommendationDto.getContent());
 
-    skillOffers.ifPresent(
-        offers -> saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId));
+    skillOffers.ifPresent(offers -> {
+      validateSkillsAreUnique(offers);
+      validateSkillIdExists(offers);
+      saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId);
+    });
+
     recommendationDto.setCreatedAt(currentDateTime);
     recommendationDto.setId(recommendationId);
 
     recommendationEventPublisher.publish(RecommendationEventDto.builder()
-            .id(recommendationDto.getId())
-            .authorId(recommendationDto.getAuthorId())
-            .receiverId(recommendationDto.getReceiverId())
-            .receivedAt(recommendationDto.getCreatedAt().toString())
+        .id(recommendationDto.getId())
+        .authorId(recommendationDto.getAuthorId())
+        .receiverId(recommendationDto.getReceiverId())
+        .receivedAt(recommendationDto.getCreatedAt().toString())
         .build());
 
     return recommendationDto;
@@ -91,14 +89,14 @@ public class RecommendationService {
         recommendationDto.getSkillOffers());
     validateUserIdExists(authorId);
     validateUserIdExists(receiverId);
+
     skillOffersNew.ifPresent(offers -> {
       validateSkillsAreUnique(offers);
       validateSkillIdExists(offers);
+      saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId);
     });
 
     skillOfferRepository.deleteAllByRecommendationId(recommendationId);
-    skillOffersNew.ifPresent(
-        offers -> saveSkillOffersAndGuarantee(recommendationId, offers, receiverId, authorId));
     recommendationRepository.update(recommendationId, authorId, receiverId,
         recommendationDto.getContent());
     return recommendationDto;
@@ -155,10 +153,10 @@ public class RecommendationService {
   }
 
   private void validateRecommendationIdExists(Long recommendationId) {
-      if (!recommendationRepository.existsById(recommendationId)) {
-          throw new DataValidationException(
-              "Recommendation not found with id: " + recommendationId);
-      }
+    if (!recommendationRepository.existsById(recommendationId)) {
+      throw new DataValidationException(
+          "Recommendation not found with id: " + recommendationId);
+    }
   }
 
   private void validateRecommendationProvidedInLast6Months(Long authorId, Long receiverId,
@@ -166,10 +164,13 @@ public class RecommendationService {
           currentDateTime) {
     Optional<Recommendation> recentRecommendation = recommendationRepository.findFirstByAuthorIdAndReceiverIdOrderByCreatedAtDesc(
         authorId, receiverId);
-    if (recentRecommendation.isPresent()
-        && ChronoUnit.MONTHS.between(recentRecommendation.get().getCreatedAt(), currentDateTime)
-        <= 6) {
-      throw new DataValidationException("Recommendation already exists within the last 6 months.");
+    if (recentRecommendation.isPresent()) {
+      LocalDateTime createdAt = recentRecommendation.get().getCreatedAt();
+      LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
+      if (createdAt.isAfter(sixMonthsAgo)) {
+        throw new DataValidationException(
+            "Recommendation already exists within the last 6 months.");
+      }
     }
   }
 
