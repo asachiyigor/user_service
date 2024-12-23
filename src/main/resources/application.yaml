@@ -37,6 +37,8 @@ spring:
           name: skill_offer_event
         bought-premium:
           name: bought_premium_channel
+        recommendation:
+          name: recommendation_channel
 
   servlet:
     multipart:

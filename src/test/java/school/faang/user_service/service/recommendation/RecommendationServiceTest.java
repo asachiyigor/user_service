@@ -1,10 +1,26 @@
 package school.faang.user_service.service.recommendation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -14,30 +30,20 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import school.faang.user_service.dto.recommendation.RecommendationDto;
+import school.faang.user_service.dto.recommendation.RecommendationEventDto;
 import school.faang.user_service.dto.recommendation.SkillOfferDto;
 import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.recommendation.Recommendation;
 import school.faang.user_service.exception.DataValidationException;
 import school.faang.user_service.mapper.recommendation.RecommendationMapperImpl;
+import school.faang.user_service.publisher.RecommendationEventPublisher;
 import school.faang.user_service.repository.SkillRepository;
 import school.faang.user_service.repository.UserRepository;
 import school.faang.user_service.repository.UserSkillGuaranteeRepository;
 import school.faang.user_service.repository.recommendation.RecommendationRepository;
 import school.faang.user_service.repository.recommendation.SkillOfferRepository;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 public class RecommendationServiceTest {
 
@@ -55,9 +61,14 @@ public class RecommendationServiceTest {
     private RecommendationMapperImpl recommendationMapper;
     @Mock
     private Recommendation recommendation;
+    @Mock
+    private RecommendationEventPublisher recommendationEventPublisher;
 
     @InjectMocks
     private RecommendationService recommendationService;
+
+    @Captor
+    private ArgumentCaptor<RecommendationEventDto> eventArgumentCaptor;
 
     private RecommendationDto recommendationDto;
 
@@ -91,6 +102,11 @@ public class RecommendationServiceTest {
 
         verify(userRepository, times(2)).existsById(anyLong());
         verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
+        verify(recommendationEventPublisher, times(1)).publish(eventArgumentCaptor.capture());
+
+        RecommendationEventDto dto = eventArgumentCaptor.getValue();
+        assertEquals(recommendationId, dto.id());
+
         assertNotNull(result);
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
@@ -115,6 +131,11 @@ public class RecommendationServiceTest {
         verify(skillRepository).existsById(anyLong());
         verify(skillOfferRepository).create(anyLong(), anyLong());
         verify(userRepository, times(2)).existsById(anyLong());
+        verify(recommendationEventPublisher, times(1)).publish(eventArgumentCaptor.capture());
+
+        RecommendationEventDto dto = eventArgumentCaptor.getValue();
+        assertEquals(recommendationId, dto.id());
+
         assertNotNull(result);
         Assertions.assertEquals(recommendationDto.getContent(), result.getContent());
         Assertions.assertEquals(recommendationId, result.getId());
@@ -142,6 +163,11 @@ public class RecommendationServiceTest {
         verify(skillOfferRepository).create(anyLong(), anyLong());
         verify(userRepository, times(2)).existsById(anyLong());
         verify(userSkillGuaranteeRepository).addSkillGuarantee(receiverId, skillId, authorId);
+        verify(recommendationEventPublisher, times(1)).publish(eventArgumentCaptor.capture());
+
+        RecommendationEventDto dto = eventArgumentCaptor.getValue();
+        assertEquals(recommendationId, dto.id());
+
         assertNotNull(result);
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
@@ -166,6 +192,11 @@ public class RecommendationServiceTest {
         verify(userRepository, times(2)).existsById(anyLong());
         verify(userRepository, times(2)).existsById(anyLong());
         verify(recommendationRepository).create(authorId, receiverId, recommendationContent);
+        verify(recommendationEventPublisher, times(1)).publish(eventArgumentCaptor.capture());
+
+        RecommendationEventDto dto = eventArgumentCaptor.getValue();
+        assertEquals(recommendationId, dto.id());
+
         assertNotNull(result);
         Assertions.assertEquals(recommendationId, result.getId());
         Assertions.assertEquals(authorId, result.getAuthorId());
@@ -213,7 +244,7 @@ public class RecommendationServiceTest {
         when(userRepository.existsById(anyLong())).thenReturn(true);
         when(userRepository.existsById(anyLong())).thenReturn(true);
         Recommendation recentRecommendation = new Recommendation();
-        recentRecommendation.setCreatedAt(LocalDateTime.now().minusMonths(6));
+        recentRecommendation.setCreatedAt(LocalDateTime.now().minusMonths(6).plusMinutes(1));
         when(recommendationRepository.findFirstByAuthorIdAndReceiverIdOrderByCreatedAtDesc(authorId, receiverId))
                 .thenReturn(Optional.of(recentRecommendation));
 
