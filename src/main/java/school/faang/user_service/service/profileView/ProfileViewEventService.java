@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import school.faang.user_service.dto.profileView.ProfileViewEventDto;
-import school.faang.user_service.entity.User;
-import school.faang.user_service.entity.event.Event;
 import school.faang.user_service.publisher.profileView.ProfileViewEventPublisher;
 
 import java.time.LocalDateTime;
