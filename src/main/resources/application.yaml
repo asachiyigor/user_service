@@ -39,6 +39,8 @@ spring:
           name: bought_premium_channel
         recommendation:
           name: recommendation_channel
+        profileView-channel:
+          name: profileView-topic
 
   servlet:
     multipart:
