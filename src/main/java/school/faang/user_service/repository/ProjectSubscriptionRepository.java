@@ -6,6 +6,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import school.faang.user_service.entity.ProjectSubscription;
 
+import java.util.List;
+
 @Repository
 public interface ProjectSubscriptionRepository extends CrudRepository<ProjectSubscription, Long> {
     @Query(nativeQuery = true,
@@ -16,4 +18,12 @@ public interface ProjectSubscriptionRepository extends CrudRepository<ProjectSub
     @Query(nativeQuery = true,
             value = "insert into project_subscription  (follower_id, project_id) values (:followerId, :projectId)")
     void followProject(long followerId, long projectId);
+
+
+    @Query(nativeQuery = true,
+            value = "SELECT follower_id \n" +
+                    "FROM project_subscription \n" +
+                    "WHERE project_id = ?\n" +
+                    "ORDER BY created_at DESC")
+    List<Long> findProjectSubscribers(long projectId);
 }

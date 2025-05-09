@@ -13,5 +13,4 @@ public interface PaymentServiceClient {
 
   @PostMapping("/api/payment")
   PaymentResponse sendPayment(@RequestBody @Validated PaymentRequest dto);
-
 }

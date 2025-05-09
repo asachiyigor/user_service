@@ -1,4 +1,4 @@
-package school.faang.user_service.service;
+package school.faang.user_service.service.subscription;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,8 @@ import school.faang.user_service.dto.project.ProjectDto;
 import school.faang.user_service.puiblisher.followerEvent.ProjectFollowerEventPublisher;
 import school.faang.user_service.repository.ProjectSubscriptionRepository;
 import school.faang.user_service.validator.event.ProjectSubscriptionValidator;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -29,4 +31,15 @@ public class ProjectSubscriptionService {
             log.debug("Project with id: {} is already subscribed by user with id: {}", projectDto.projectId(), followerId);
         }
     }
+
+    public void followProjectByProjectId(long followerId, long projectId) {
+        if (!projectSubscriptionValidator.isAlreadySubscribed(followerId, projectId)) {
+            projectSubscriptionRepository.followProject(followerId, projectId);
+        } else {
+            log.debug("Project with id: {} is already subscribed by user with id: {}", projectId, followerId);
+        }
+    }
+
+    public List<Long> getProjectSubscriptions(long projectId) {
+        return projectSubscriptionRepository.findProjectSubscribers(projectId); }
 }

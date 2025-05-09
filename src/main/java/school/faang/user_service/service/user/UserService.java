@@ -121,6 +121,13 @@ public class UserService {
                 .toList();
     }
 
+    public List<Long> getUserSubscribersIds(long userId) {
+        return userRepository.findUserSubsribers(userId)
+                .stream()
+                .map(User::getId)
+                .toList();
+    }
+
     @Async("worker-pool")
     @Synchronized
     public void banUsers(List<Long> idForBanUsers) {
@@ -142,6 +149,20 @@ public class UserService {
                 .toList();
         filteredUsers.forEach(userDto -> publishSearchAppearanceEvent(userDto.getId()));
         return filteredUsers;
+    }
+
+    public List<Long> getAllUserIds() {
+        List<User> users = userRepository.findAll();
+        log.info("Found {} usersIds", users.size());
+        return List.of(users.stream().map(User::getId).toArray(Long[]::new));
+    }
+
+    public List<UserDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        log.info("Found {} users", users.size());
+        return users.stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
     private void publishSearchAppearanceEvent(Long foundUserId) {

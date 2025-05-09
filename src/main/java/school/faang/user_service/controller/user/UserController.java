@@ -42,4 +42,19 @@ public class UserController {
     public List<UserResponseCsvDto> getUsersFromCsv(@RequestParam MultipartFile file) {
         return userService.readingUsersFromCsv(file);
     }
+
+    @GetMapping("/users/all/ids")
+    public List<Long> getAllUserIds() {
+        return userService.getAllUserIds();
+    };
+
+    @GetMapping("/users/subscribers/ids/{userId}")
+    public List<Long> getUserSubscribersIds(@PathVariable long userId) {
+        return userService.getUserSubscribersIds(userId);
+    }
+
+    @GetMapping("/users/all")
+    public List<UserDto> findAllUsers() {
+        return userService.getAllUsers();
+    }
 }

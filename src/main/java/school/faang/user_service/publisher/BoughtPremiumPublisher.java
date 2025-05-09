@@ -20,5 +20,4 @@ public class BoughtPremiumPublisher {
     redisTemplate.convertAndSend(topic, eventDto);
     log.info("Message {} send via {}", eventDto, topic);
   }
-
 }

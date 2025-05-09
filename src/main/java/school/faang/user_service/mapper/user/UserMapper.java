@@ -19,6 +19,9 @@ public interface UserMapper {
     UserDto toDto(User user);
     User toEntity(UserDto userDto);
 
+    List<UserDto> toDto(List<User> users);
+    List<User> toEntity(List<UserDto> userDtos);
+
     @Named("mapEventsToEventIds")
     default List<Long> mapEventsToEventIds(List<Event> participatedEvents) {
         return participatedEvents.stream()
